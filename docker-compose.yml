@@ -1,0 +1,39 @@
+services:
+  smash-bash:
+    build: .
+    container_name: smash-bash
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3001}:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:3001}
+      DB_PATH: /app/server/data/smashbash.db
+    volumes:
+      - smashbash-data:/app/server/data
+
+  # Opzionale: HTTPS automatico con il tuo dominio
+  # Avvia con: docker compose --profile tls up -d
+  caddy:
+    profiles: ["tls"]
+    image: caddy:2-alpine
+    container_name: smash-bash-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      smash-bash:
+        condition: service_healthy
+
+volumes:
+  smashbash-data:
+  caddy-data:
+  caddy-config:

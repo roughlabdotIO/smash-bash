@@ -1,0 +1,29 @@
+# Dependencies
+**/node_modules
+client/dist
+
+# Database locale (viene montato come volume)
+server/data/*.db
+server/data/*.db-*
+
+# Git & IDE
+.git
+.gitignore
+.cursor
+
+# Asset sorgente non usati in produzione
+smash-bash.html
+ChatGPT*.png
+
+# Deploy cloud alternativi
+render.yaml
+client/vercel.json
+
+# Env locali
+.env
+.env.*
+!.env.example
+
+# Docs
+README.md
+*.md

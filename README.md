@@ -47,53 +47,112 @@ Evento WebSocket `roster:update` inviato a tutti i client dopo ogni sorteggio.
 
 ## Produzione
 
-### Architettura consigliata
+### Docker sul Raspberry Pi (consigliato)
 
-| Parte | Dove | Perché |
-|-------|------|--------|
-| **Frontend** (React) | [Vercel](https://vercel.com) | CDN, deploy automatico |
-| **Backend** (API + WebSocket + SQLite) | [Render](https://render.com) | Server Node persistente, Socket.io, file SQLite |
+Un solo container serve **frontend + API + WebSocket + SQLite**. I dati restano nel volume Docker `smashbash-data`.
 
-Vercel non supporta bene Express + Socket.io + SQLite sullo stesso deploy.
+#### 1 — Prepara il Raspberry
 
-### 1 — Backend su Render
+```bash
+# sul Pi
+sudo apt update && sudo apt install -y docker.io docker-compose-plugin git
+sudo usermod -aG docker $USER
+# esci e rientra nella sessione SSH
+```
 
-1. Crea un repo GitHub con questo progetto (o solo la cartella `server/` + `render.yaml` alla root).
-2. Su Render: **New → Blueprint** (oppure Web Service) e collega il repo.
-3. Imposta la variabile d'ambiente:
-   - `CLIENT_ORIGIN` = URL Vercel del frontend (es. `https://smash-bash.vercel.app`)
-4. Annota l'URL del servizio (es. `https://smash-bash-api.onrender.com`).
+#### 2 — Clona e configura
 
-> **Nota:** sul piano free di Render il filesystem è effimero: i dati SQLite possono resetsarsi ai redeploy. Per un evento singolo va bene; per produzione stabile valuta un volume persistente o un DB esterno.
+```bash
+git clone <tuo-repo> smash-bash
+cd smash-bash
+cp .env.example .env
+```
 
-### 2 — Frontend su Vercel
+Modifica `.env`:
 
-1. Importa il repo su Vercel (o `npx vercel` dalla cartella `client/`).
-2. Impostazioni progetto:
-   - **Root Directory:** `client`
-   - **Framework Preset:** Vite
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `dist`
-3. Variabile d'ambiente (obbligatoria in produzione):
-   - `VITE_API_URL` = URL Render del backend (senza slash finale)
-4. Deploy.
+```env
+APP_PORT=3001
+CLIENT_ORIGIN=https://smashbash.tuodominio.it
+DOMAIN=smashbash.tuodominio.it
+```
 
-### 3 — Verifica
+> `CLIENT_ORIGIN` deve coincidere con l'URL che gli utenti aprono nel browser (http o https).
 
-- Apri il sito Vercel → iscrizione e sorteggio devono funzionare.
-- Il roster si aggiorna in tempo reale via WebSocket.
-- `GET https://TUO-BACKEND/api/health` → `{ "ok": true }`
+#### 3 — Build e avvio
 
-### Deploy monolitico (alternativa)
+```bash
+docker compose build
+docker compose up -d
+docker compose logs -f smash-bash
+```
 
-Se preferisci un solo host (senza Vercel):
+Sito disponibile su `http://IP-DEL-PI:3001` (o sul dominio, vedi sotto).
+
+#### 4 — Dominio e HTTPS
+
+**Opzione A — Caddy integrato** (Let's Encrypt automatico):
+
+```bash
+docker compose --profile tls up -d
+```
+
+Assicurati che il DNS del dominio punti all'IP pubblico del Pi e che le porte 80/443 siano aperte sul router.
+
+**Opzione B — Nginx / reverse proxy già presente sul Pi**
+
+Inoltra tutto verso `http://127.0.0.1:3001`, includendo gli header WebSocket per Socket.io:
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name smashbash.tuodominio.it;
+
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+```
+
+#### 5 — Verifica
+
+- Apri il sito → iscrizione e sorteggio
+- Roster live via WebSocket
+- `curl http://localhost:3001/api/health` → `{"ok":true}`
+
+#### Comandi utili
+
+```bash
+npm run docker:build    # rebuild immagine
+npm run docker:up       # avvia in background
+npm run docker:logs     # log live
+npm run docker:down     # ferma i container
+```
+
+> **Nota Pi:** builda l'immagine **sul Raspberry** (ARM). Se buildi da PC Windows, usa `docker compose build` direttamente sul Pi dopo il clone, non cross-compile.
+
+---
+
+### Deploy locale senza Docker
 
 ```bash
 npm run build
-NODE_ENV=production npm run start
+NODE_ENV=production CLIENT_ORIGIN=http://localhost:3001 npm run start
 ```
 
 Un solo processo serve API, WebSocket e la build React su http://localhost:3001.
+
+---
+
+### Cloud (alternativa)
+
+Per deploy su Vercel + Render vedi `client/vercel.json` e `render.yaml`.
 
 ## Variabili d'ambiente (server)
 
