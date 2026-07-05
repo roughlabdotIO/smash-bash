@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMASH BASH — Beach Volley Tournament</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;600;700&display=swap');
+
+:root{
+  --yellow:#FFD400;
+  --yellow-deep:#F0B90B;
+  --black:#101010;
+  --ink:#1a1a1a;
+  --sand:#F5E9D0;
+  --white:#FFFFFF;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Archivo',system-ui,sans-serif;
+  background:var(--sand);
+  color:var(--ink);
+  overflow-x:hidden;
+}
+h1,h2,h3,.display{font-family:'Anton',Impact,sans-serif;letter-spacing:.02em;}
+
+/* ---------- HERO ---------- */
+.hero{
+  position:relative;
+  min-height:92vh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.hero-split{
+  position:absolute;inset:0;
+  display:flex;
+}
+.side{flex:1;position:relative;transition:flex .5s cubic-bezier(.7,0,.3,1);}
+.side.black{background:var(--black);}
+.side.yellow{background:var(--yellow);}
+.hero-split::after{
+  content:"";
+  position:absolute;top:-10%;bottom:-10%;left:50%;
+  width:14px;background:var(--sand);
+  transform:translateX(-50%) rotate(6deg);
+}
+.hero-inner{
+  position:relative;z-index:2;
+  flex:1;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
+  padding:48px 20px 100px;
+}
+.eyebrow{
+  font-weight:700;font-size:.8rem;letter-spacing:.35em;text-transform:uppercase;
+  color:var(--sand);
+  background:rgba(0,0,0,.35);
+  padding:8px 18px;border:1px solid rgba(245,233,208,.4);
+  margin-bottom:26px;
+}
+.hero h1{
+  font-size:clamp(3.4rem,13vw,9.5rem);
+  line-height:.9;
+  text-transform:uppercase;
+}
+.hero h1 .w1{color:var(--yellow);text-shadow:4px 4px 0 rgba(0,0,0,.55); display:block;}
+.hero h1 .w2{color:var(--black);text-shadow:4px 4px 0 rgba(255,255,255,.55); display:block;}
+.vs-row{
+  display:flex;align-items:center;gap:18px;
+  margin-top:34px;
+  font-family:'Anton',sans-serif;
+  text-transform:uppercase;
+  font-size:clamp(1rem,3vw,1.6rem);
+}
+.vs-row .team-a{color:var(--sand);}
+.vs-row .team-b{color:var(--black);}
+.vs-badge{
+  width:64px;height:64px;border-radius:50%;
+  background:var(--sand);color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.5rem;
+  box-shadow:0 0 0 6px rgba(245,233,208,.25);
+  animation:pulse 2.4s ease-in-out infinite;
+}
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 0 6px rgba(245,233,208,.25);}
+  50%{box-shadow:0 0 0 14px rgba(245,233,208,.08);}
+}
+.hero-cta{
+  margin-top:44px;
+  display:inline-block;
+  font-family:'Anton',sans-serif;
+  font-size:1.15rem;letter-spacing:.08em;text-transform:uppercase;
+  padding:18px 44px;
+  background:var(--sand);color:var(--ink);
+  text-decoration:none;
+  border:3px solid var(--ink);
+  box-shadow:6px 6px 0 var(--ink);
+  transition:transform .15s, box-shadow .15s;
+}
+.hero-cta:hover{transform:translate(-2px,-2px);box-shadow:9px 9px 0 var(--ink);}
+.hero-cta:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink);}
+
+/* ---------- INFO TICKET ---------- */
+.ticket{
+  position:relative;z-index:3;
+  max-width:1000px;
+  margin:-70px auto 0;
+  background:var(--white);
+  border:3px solid var(--ink);
+  box-shadow:8px 8px 0 var(--ink);
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+}
+.ticket-cell{
+  padding:26px 22px;
+  border-right:2px dashed rgba(16,16,16,.35);
+}
+.ticket-cell:last-child{border-right:none;}
+.ticket-label{
+  font-size:.68rem;font-weight:700;letter-spacing:.25em;text-transform:uppercase;
+  color:#8a8a8a;margin-bottom:8px;
+}
+.ticket-value{
+  font-family:'Anton',sans-serif;
+  font-size:1.25rem;text-transform:uppercase;line-height:1.15;
+}
+.ticket-sub{font-size:.85rem;margin-top:4px;color:#555;}
+
+/* ---------- SECTIONS ---------- */
+section{padding:90px 20px;}
+.wrap{max-width:1000px;margin:0 auto;}
+.section-title{
+  font-size:clamp(2rem,6vw,3.4rem);
+  text-transform:uppercase;
+  margin-bottom:14px;
+}
+.section-kicker{
+  font-size:.75rem;font-weight:700;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--yellow-deep);margin-bottom:10px;
+}
+.section-sub{max-width:560px;color:#4c4c4c;margin-bottom:44px;line-height:1.6;}
+
+/* ---------- FORMAT ---------- */
+.format-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+.rule-card{
+  background:var(--white);
+  border:3px solid var(--ink);
+  padding:28px 24px;
+  box-shadow:6px 6px 0 var(--ink);
+}
+.rule-card h3{font-size:1.15rem;text-transform:uppercase;margin-bottom:10px;}
+.rule-card p{font-size:.92rem;line-height:1.55;color:#444;}
+.rule-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:42px;height:42px;margin-bottom:16px;
+  background:var(--yellow);border:3px solid var(--ink);
+  font-family:'Anton',sans-serif;font-size:1.1rem;
+}
+
+/* ---------- FORMULA ---------- */
+#formula{background:var(--yellow);}
+#formula .section-kicker{color:var(--black);}
+.wip-box{
+  border:3px dashed var(--ink);
+  background:rgba(255,255,255,.5);
+  padding:56px 30px;
+  text-align:center;
+}
+.wip-box p{font-size:1.05rem;line-height:1.7;color:#3d3200;}
+.wip-badge{
+  display:inline-block;
+  font-family:'Anton',sans-serif;
+  font-size:1.6rem;letter-spacing:.15em;text-transform:uppercase;
+  background:var(--black);color:var(--yellow);
+  padding:10px 28px;
+  margin-bottom:20px;
+  transform:rotate(-3deg);
+}
+#iscrizione{background:var(--black);color:var(--sand);}
+#iscrizione .section-kicker{color:var(--yellow);}
+#iscrizione .section-sub{color:#bdb4a2;}
+.reg-panel{
+  display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start;
+}
+.reg-form{
+  background:#1c1c1c;
+  border:3px solid var(--yellow);
+  padding:34px 30px;
+  box-shadow:8px 8px 0 var(--yellow);
+}
+.field{margin-bottom:20px;}
+.field label{
+  display:block;font-size:.7rem;font-weight:700;letter-spacing:.25em;
+  text-transform:uppercase;color:var(--yellow);margin-bottom:8px;
+}
+.field input[type=text]{
+  width:100%;padding:14px 14px;
+  background:#101010;border:2px solid #3a3a3a;color:var(--sand);
+  font-family:'Archivo',sans-serif;font-size:1rem;
+}
+.field input[type=text]:focus{outline:none;border-color:var(--yellow);}
+.gender-row{display:flex;gap:12px;}
+.gender-btn{
+  flex:1;padding:14px 0;
+  background:#101010;border:2px solid #3a3a3a;color:#9a9a9a;
+  font-family:'Anton',sans-serif;font-size:1rem;text-transform:uppercase;
+  cursor:pointer;transition:all .15s;
+}
+.gender-btn.sel{background:var(--yellow);color:var(--ink);border-color:var(--yellow);}
+.size-row{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
+.size-btn{
+  padding:11px 0;
+  background:#101010;border:2px solid #3a3a3a;color:#9a9a9a;
+  font-family:'Anton',sans-serif;font-size:.85rem;text-transform:uppercase;
+  cursor:pointer;transition:all .15s;
+}
+.size-btn.sel{background:var(--yellow);color:var(--ink);border-color:var(--yellow);}
+@media (max-width:420px){.size-row{grid-template-columns:repeat(4,1fr);}}
+.big-btn{
+  width:100%;margin-top:8px;
+  padding:18px 0;
+  font-family:'Anton',sans-serif;font-size:1.15rem;letter-spacing:.08em;text-transform:uppercase;
+  background:var(--yellow);color:var(--ink);
+  border:3px solid var(--ink);
+  cursor:pointer;
+  box-shadow:5px 5px 0 rgba(255,212,0,.35);
+  transition:transform .12s;
+}
+.big-btn:hover:not(:disabled){transform:translate(-2px,-2px);}
+.big-btn:disabled{opacity:.4;cursor:not-allowed;}
+.form-msg{margin-top:14px;font-size:.88rem;min-height:1.2em;}
+.form-msg.err{color:#ff7b6b;}
+.form-msg.ok{color:#8fe388;}
+
+/* ---------- DRAW ---------- */
+.draw-box{
+  border:3px dashed #4a4a4a;
+  padding:40px 30px;
+  text-align:center;
+  min-height:320px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:background .18s, border-color .18s;
+}
+.draw-box.flash-black{background:#000;border-color:var(--sand);}
+.draw-box.flash-yellow{background:var(--yellow);border-color:var(--ink);}
+.draw-box.flash-yellow *{color:var(--ink) !important;}
+.draw-title{font-size:1.5rem;text-transform:uppercase;margin-bottom:12px;color:var(--sand);}
+.draw-sub{color:#a89f8d;font-size:.9rem;margin-bottom:26px;max-width:320px;line-height:1.5;}
+.draw-btn{
+  padding:20px 46px;
+  font-family:'Anton',sans-serif;font-size:1.3rem;letter-spacing:.06em;text-transform:uppercase;
+  background:transparent;color:var(--yellow);
+  border:3px solid var(--yellow);
+  cursor:pointer;transition:all .15s;
+}
+.draw-btn:hover:not(:disabled){background:var(--yellow);color:var(--ink);}
+.draw-btn:disabled{opacity:.35;cursor:not-allowed;}
+.result-team{
+  font-family:'Anton',sans-serif;
+  font-size:clamp(2.2rem,7vw,3.6rem);
+  text-transform:uppercase;line-height:1;
+  margin:10px 0 6px;
+  animation:pop .5s cubic-bezier(.2,1.6,.4,1);
+}
+@keyframes pop{from{transform:scale(.4);opacity:0;}to{transform:scale(1);opacity:1;}}
+.result-name{font-size:1rem;color:#cfc6b3;}
+
+/* ---------- ROSTER ---------- */
+.roster-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px;}
+.roster-col{border:3px solid var(--ink);box-shadow:6px 6px 0 var(--ink);}
+.roster-head{
+  padding:20px 22px;
+  font-family:'Anton',sans-serif;font-size:1.3rem;text-transform:uppercase;
+  display:flex;justify-content:space-between;align-items:baseline;
+}
+.roster-col.black .roster-head{background:var(--black);color:var(--yellow);}
+.roster-col.yellow .roster-head{background:var(--yellow);color:var(--ink);}
+.roster-count{font-family:'Archivo',sans-serif;font-size:.8rem;font-weight:700;letter-spacing:.1em;}
+.roster-body{background:var(--white);padding:14px 0;min-height:180px;}
+.roster-body ol{list-style:none;}
+.roster-body li{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:9px 22px;font-size:.95rem;
+  border-bottom:1px solid #eee;
+}
+.roster-body li:last-child{border-bottom:none;}
+.tag{
+  font-size:.65rem;font-weight:700;letter-spacing:.15em;
+  padding:3px 8px;border:1.5px solid var(--ink);
+}
+.tag.M{background:#e8f1ff;}
+.tag.F{background:#ffe8f1;}
+.roster-empty{padding:30px 22px;color:#999;font-size:.9rem;font-style:italic;}
+
+/* ---------- FOOTER ---------- */
+footer{
+  background:var(--black);color:#7d7666;
+  text-align:center;padding:36px 20px;
+  font-size:.8rem;letter-spacing:.05em;
+}
+footer strong{color:var(--yellow);font-family:'Anton',sans-serif;letter-spacing:.08em;}
+
+@media (max-width:820px){
+  .ticket{grid-template-columns:1fr 1fr;margin:-50px 16px 0;}
+  .ticket-cell:nth-child(2){border-right:none;}
+  .ticket-cell{border-bottom:2px dashed rgba(16,16,16,.35);}
+  .ticket-cell:nth-child(3),.ticket-cell:nth-child(4){border-bottom:none;}
+  .format-grid{grid-template-columns:1fr;}
+  .reg-panel{grid-template-columns:1fr;}
+  .roster-grid{grid-template-columns:1fr;}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important;}
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-split">
+    <div class="side black"></div>
+    <div class="side yellow"></div>
+  </div>
+  <div class="hero-inner">
+    <div class="eyebrow">Beach Volley Tournament · Ancona</div>
+    <h1><span class="w1">Smash</span><span class="w2">Bash</span></h1>
+    <div class="vs-row">
+      <span class="team-a">Team Black</span>
+      <span class="vs-badge display">VS</span>
+      <span class="team-b">Team Yellow</span>
+    </div>
+    <a href="#iscrizione" class="hero-cta">Iscriviti ed estrai la squadra</a>
+  </div>
+</header>
+
+<!-- INFO TICKET -->
+<div class="ticket">
+  <div class="ticket-cell">
+    <div class="ticket-label">Dove</div>
+    <div class="ticket-value">Beach Arena</div>
+    <div class="ticket-sub">Via I° Maggio — Ancona</div>
+  </div>
+  <div class="ticket-cell">
+    <div class="ticket-label">Quando</div>
+    <div class="ticket-value">Mar 7 Luglio</div>
+    <div class="ticket-sub">Martedì 2026 · Segna la data</div>
+  </div>
+  <div class="ticket-cell">
+    <div class="ticket-label">Ritrovo</div>
+    <div class="ticket-value">Ore 18:30</div>
+    <div class="ticket-sub">Riscaldamento e briefing</div>
+  </div>
+  <div class="ticket-cell">
+    <div class="ticket-label">Inizio gare</div>
+    <div class="ticket-value">Ore 19:00</div>
+    <div class="ticket-sub">Si fa sul serio</div>
+  </div>
+</div>
+
+<!-- FORMAT -->
+<section id="formato">
+  <div class="wrap">
+    <div class="section-kicker">Come funziona</div>
+    <h2 class="section-title">Il formato</h2>
+    <p class="section-sub">Un solo torneo, due squadre, zero scuse. Il destino decide da che parte della rete giocherai.</p>
+    <div class="format-grid">
+      <div class="rule-card">
+        <div class="rule-num">2</div>
+        <h3>Due squadre</h3>
+        <p>Team Black contro Team Yellow. Nessun girone, nessun tabellone: una sfida diretta sulla sabbia della Beach Arena.</p>
+      </div>
+      <div class="rule-card">
+        <div class="rule-num">12</div>
+        <h3>Max 12 per squadra</h3>
+        <p>Ogni squadra è composta da un massimo di 12 membri: 6 maschi e 6 femmine. Squadre bilanciate, gioco vero.</p>
+      </div>
+      <div class="rule-card">
+        <div class="rule-num">?</div>
+        <h3>Sorteggio cieco</h3>
+        <p>Non scegli la tua squadra: dopo l'iscrizione premi "Estrai squadra" e scopri all'istante il tuo colore.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FORMULA DI GIOCO -->
+<section id="formula">
+  <div class="wrap">
+    <div class="section-kicker">Programma della serata</div>
+    <h2 class="section-title">Formula di gioco</h2>
+    <div class="wip-box">
+      <div class="wip-badge">WIP</div>
+      <p>La formula di gioco è in fase di definizione.<br>Torna a trovarci: la sveleremo presto!</p>
+    </div>
+  </div>
+</section>
+
+<!-- REGISTRATION + DRAW -->
+<section id="iscrizione">
+  <div class="wrap">
+    <div class="section-kicker">Posti limitati · 24 totali</div>
+    <h2 class="section-title" style="color:var(--sand)">Iscriviti al torneo</h2>
+    <p class="section-sub">Inserisci i tuoi dati, poi estrai la squadra. Il tuo nome comparirà nel roster pubblico qui sotto, visibile a tutti gli iscritti.</p>
+
+    <div class="reg-panel">
+      <!-- FORM -->
+      <div class="reg-form">
+        <div class="field">
+          <label for="nome">Nome</label>
+          <input type="text" id="nome" maxlength="40" autocomplete="given-name" placeholder="Es. Giulia">
+        </div>
+        <div class="field">
+          <label for="cognome">Cognome</label>
+          <input type="text" id="cognome" maxlength="40" autocomplete="family-name" placeholder="Es. Rossi">
+        </div>
+        <div class="field">
+          <label>Sesso</label>
+          <div class="gender-row">
+            <button type="button" class="gender-btn" id="btnM" onclick="setGender('M')">Maschio</button>
+            <button type="button" class="gender-btn" id="btnF" onclick="setGender('F')">Femmina</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Taglia pantaloncino <span style="color:#8a8a8a;letter-spacing:.05em">(stile Kipsta)</span></label>
+          <div class="size-row">
+            <button type="button" class="size-btn" onclick="setSize('XS',this)">XS</button>
+            <button type="button" class="size-btn" onclick="setSize('S',this)">S</button>
+            <button type="button" class="size-btn" onclick="setSize('M',this)">M</button>
+            <button type="button" class="size-btn" onclick="setSize('L',this)">L</button>
+            <button type="button" class="size-btn" onclick="setSize('XL',this)">XL</button>
+            <button type="button" class="size-btn" onclick="setSize('2XL',this)">2XL</button>
+            <button type="button" class="size-btn" onclick="setSize('3XL',this)">3XL</button>
+          </div>
+        </div>
+        <button class="big-btn" id="registerBtn" onclick="registerPlayer()">Iscriviti</button>
+        <div class="form-msg" id="formMsg"></div>
+      </div>
+
+      <!-- DRAW -->
+      <div class="draw-box" id="drawBox">
+        <div id="drawIdle">
+          <div class="draw-title">Il sorteggio</div>
+          <p class="draw-sub">Prima completa l'iscrizione. Poi premi il pulsante e lascia decidere alla sorte: nero o giallo?</p>
+          <button class="draw-btn" id="drawBtn" onclick="drawTeam()" disabled>Estrai squadra</button>
+        </div>
+        <div id="drawResult" style="display:none">
+          <div class="draw-title" style="font-size:1rem;letter-spacing:.2em">Sei nel</div>
+          <div class="result-team" id="resultTeam"></div>
+          <div class="result-name" id="resultName"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROSTER -->
+<section id="roster">
+  <div class="wrap">
+    <div class="section-kicker">Chi c'è già</div>
+    <h2 class="section-title">Roster</h2>
+    <p class="section-sub">Le squadre si riempiono in tempo reale a ogni estrazione. Massimo 6 maschi e 6 femmine per lato.</p>
+    <div class="roster-grid">
+      <div class="roster-col black">
+        <div class="roster-head"><span>Team Black</span><span class="roster-count" id="countBlack">0/12</span></div>
+        <div class="roster-body" id="listBlack"><div class="roster-empty">Ancora nessun giocatore. Sarai tu il primo?</div></div>
+      </div>
+      <div class="roster-col yellow">
+        <div class="roster-head"><span>Team Yellow</span><span class="roster-count" id="countYellow">0/12</span></div>
+        <div class="roster-body" id="listYellow"><div class="roster-empty">Ancora nessun giocatore. Sarai tu il primo?</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <strong>SMASH BASH</strong> · Beach Arena · Via I° Maggio, Ancona · Martedì 7 luglio 2026 · ritrovo 18:30 · inizio gare 19:00
+</footer>
+
+<script>
+const KEY = 'smashbash-roster';
+const CAP = 6; // per squadra, per sesso
+let gender = null;
+let taglia = null;
+let pendingPlayer = null; // iscritto ma non ancora estratto
+let roster = [];
+
+function $(id){ return document.getElementById(id); }
+
+async function loadRoster(){
+  try{
+    const res = await window.storage.get(KEY, true);
+    roster = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){
+    roster = [];
+  }
+  renderRoster();
+}
+
+async function saveRoster(){
+  try{
+    await window.storage.set(KEY, JSON.stringify(roster), true);
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+function counts(){
+  const c = {black:{M:0,F:0}, yellow:{M:0,F:0}};
+  roster.forEach(p => { if(c[p.team]) c[p.team][p.sesso]++; });
+  return c;
+}
+
+function setGender(g){
+  gender = g;
+  $('btnM').classList.toggle('sel', g==='M');
+  $('btnF').classList.toggle('sel', g==='F');
+}
+
+function setSize(s, btn){
+  taglia = s;
+  document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+
+function msg(text, type){
+  const el = $('formMsg');
+  el.textContent = text;
+  el.className = 'form-msg ' + (type||'');
+}
+
+function registerPlayer(){
+  const nome = $('nome').value.trim();
+  const cognome = $('cognome').value.trim();
+  if(!nome || !cognome){ msg('Inserisci nome e cognome.', 'err'); return; }
+  if(!gender){ msg('Seleziona il sesso.', 'err'); return; }
+  if(!taglia){ msg('Seleziona la taglia del pantaloncino.', 'err'); return; }
+
+  const dup = roster.some(p =>
+    p.nome.toLowerCase()===nome.toLowerCase() &&
+    p.cognome.toLowerCase()===cognome.toLowerCase());
+  if(dup){ msg('Questo giocatore risulta già iscritto.', 'err'); return; }
+
+  const c = counts();
+  const free = (CAP - c.black[gender]) + (CAP - c.yellow[gender]);
+  if(free <= 0){
+    msg('Posti esauriti per la categoria ' + (gender==='M'?'maschile':'femminile') + '.', 'err');
+    return;
+  }
+
+  pendingPlayer = { nome, cognome, sesso: gender, taglia };
+  msg('Iscrizione registrata, ' + nome + '! Ora estrai la tua squadra →', 'ok');
+  $('registerBtn').disabled = true;
+  $('nome').disabled = true;
+  $('cognome').disabled = true;
+  $('btnM').disabled = true;
+  $('btnF').disabled = true;
+  document.querySelectorAll('.size-btn').forEach(b => b.disabled = true);
+  $('drawBtn').disabled = false;
+}
+
+function pickTeam(sesso){
+  const c = counts();
+  const eligible = [];
+  if(c.black[sesso] < CAP) eligible.push('black');
+  if(c.yellow[sesso] < CAP) eligible.push('yellow');
+  if(eligible.length === 0) return null;
+  return eligible[Math.floor(Math.random()*eligible.length)];
+}
+
+async function drawTeam(){
+  if(!pendingPlayer) return;
+  $('drawBtn').disabled = true;
+
+  // ricarica il roster per avere i conteggi aggiornati
+  try{
+    const res = await window.storage.get(KEY, true);
+    roster = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){ /* primo iscritto: la chiave non esiste ancora */ }
+
+  const team = pickTeam(pendingPlayer.sesso);
+  if(!team){
+    msg('Nel frattempo i posti si sono esauriti per la tua categoria.', 'err');
+    resetForm();
+    return;
+  }
+
+  // animazione roulette
+  const box = $('drawBox');
+  const seq = ['flash-black','flash-yellow'];
+  let i = 0;
+  const flicker = setInterval(() => {
+    box.classList.remove('flash-black','flash-yellow');
+    box.classList.add(seq[i % 2]);
+    i++;
+  }, 160);
+
+  setTimeout(async () => {
+    clearInterval(flicker);
+    box.classList.remove('flash-black','flash-yellow');
+    box.classList.add(team === 'black' ? 'flash-black' : 'flash-yellow');
+
+    const player = { ...pendingPlayer, team, ts: Date.now() };
+    roster.push(player);
+    const ok = await saveRoster();
+    if(!ok){
+      roster.pop();
+      box.classList.remove('flash-black','flash-yellow');
+      msg('Errore di salvataggio: riprova a estrarre.', 'err');
+      $('drawBtn').disabled = false;
+      return;
+    }
+
+    $('drawIdle').style.display = 'none';
+    $('drawResult').style.display = 'block';
+    const rt = $('resultTeam');
+    rt.textContent = team === 'black' ? 'Team Black' : 'Team Yellow';
+    rt.style.color = team === 'black' ? 'var(--sand)' : 'var(--ink)';
+    $('resultName').textContent = player.nome + ' ' + player.cognome + ' — ci vediamo in campo!';
+    msg('');
+    pendingPlayer = null;
+    renderRoster();
+    setTimeout(resetFormOnly, 4000);
+  }, 2200);
+}
+
+function resetFormOnly(){
+  $('nome').value = ''; $('cognome').value = '';
+  $('nome').disabled = false; $('cognome').disabled = false;
+  $('btnM').disabled = false; $('btnF').disabled = false;
+  $('registerBtn').disabled = false;
+  gender = null;
+  $('btnM').classList.remove('sel'); $('btnF').classList.remove('sel');
+  taglia = null;
+  document.querySelectorAll('.size-btn').forEach(b => { b.disabled = false; b.classList.remove('sel'); });
+}
+
+function resetForm(){
+  pendingPlayer = null;
+  resetFormOnly();
+  $('drawBtn').disabled = true;
+}
+
+function renderRoster(){
+  const c = counts();
+  $('countBlack').textContent  = (c.black.M + c.black.F)  + '/12 · ' + c.black.M + 'M ' + c.black.F + 'F';
+  $('countYellow').textContent = (c.yellow.M + c.yellow.F) + '/12 · ' + c.yellow.M + 'M ' + c.yellow.F + 'F';
+
+  ['black','yellow'].forEach(team => {
+    const el = team === 'black' ? $('listBlack') : $('listYellow');
+    const players = roster.filter(p => p.team === team).sort((a,b)=>a.ts-b.ts);
+    if(players.length === 0){
+      el.innerHTML = '<div class="roster-empty">Ancora nessun giocatore. Sarai tu il primo?</div>';
+      return;
+    }
+    el.innerHTML = '<ol>' + players.map(p =>
+      '<li><span>' + esc(p.nome) + ' ' + esc(p.cognome) + '</span>' +
+      '<span style="display:flex;gap:6px">' +
+      (p.taglia ? '<span class="tag">' + esc(p.taglia) + '</span>' : '') +
+      '<span class="tag ' + p.sesso + '">' + p.sesso + '</span></span></li>'
+    ).join('') + '</ol>';
+  });
+}
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+loadRoster();
+</script>
+</body>
+</html>
