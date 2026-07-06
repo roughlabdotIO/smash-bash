@@ -929,6 +929,38 @@ section {
   color: #bdb4a2;
 }
 
+.registration-fee {
+  margin: 0 0 28px;
+  max-width: 640px;
+  padding: 18px 20px;
+  background: rgba(255, 212, 0, 0.08);
+  border: 2px solid rgba(255, 212, 0, 0.45);
+  border-left: 6px solid var(--yellow);
+}
+
+.registration-fee-title {
+  font-family: 'Anton', sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  margin-bottom: 8px;
+}
+
+.registration-fee-body {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--sand);
+}
+
+.registration-fee-body strong {
+  font-family: 'Anton', sans-serif;
+  font-size: 1.35rem;
+  letter-spacing: 0.04em;
+  color: var(--yellow);
+}
+
 .reg-panel {
   display: grid;
   grid-template-columns: 1fr 1fr;

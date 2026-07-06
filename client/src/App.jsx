@@ -132,6 +132,13 @@ export default function App() {
             Inserisci i tuoi dati, poi estrai la squadra. Il tuo nome comparirà
             nel roster pubblico qui sotto, visibile a tutti gli iscritti.
           </p>
+          <div className="registration-fee">
+            <div className="registration-fee-title">Costo iscrizione torneo</div>
+            <p className="registration-fee-body">
+              <strong>15€</strong> oppure, se hai un abbonamento, puoi scalare le
+              tue ore d&apos;allenamento.
+            </p>
+          </div>
           <RegistrationPanel />
         </div>
       </section>
