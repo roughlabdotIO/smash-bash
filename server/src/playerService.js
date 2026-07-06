@@ -7,10 +7,20 @@ function rowToPlayer(row) {
     nome: row.nome,
     cognome: row.cognome,
     sesso: row.sesso,
+    telefono: row.telefono ?? '',
     team: row.team,
     drawnAt: row.drawn_at,
     createdAt: row.created_at,
   };
+}
+
+function normalizeTelefono(value) {
+  return value?.trim().replace(/[\s-]/g, '') ?? '';
+}
+
+function isValidTelefono(value) {
+  const digits = value.replace(/\D/g, '');
+  return digits.length >= 9 && digits.length <= 15;
 }
 
 export function getCounts() {
@@ -41,18 +51,25 @@ export function getRoster() {
        ORDER BY drawn_at ASC`
     )
     .all();
-  return rows.map(rowToPlayer);
+  return rows.map((row) => {
+    const { telefono, ...player } = rowToPlayer(row);
+    return player;
+  });
 }
 
-export function registerPlayer({ nome, cognome, sesso }) {
+export function registerPlayer({ nome, cognome, sesso, telefono }) {
   const trimmedNome = nome?.trim();
   const trimmedCognome = cognome?.trim();
+  const normalizedTelefono = normalizeTelefono(telefono);
 
   if (!trimmedNome || !trimmedCognome) {
     return { error: 'Inserisci nome e cognome.', status: 400 };
   }
   if (!['M', 'F'].includes(sesso)) {
     return { error: 'Seleziona il sesso.', status: 400 };
+  }
+  if (!isValidTelefono(normalizedTelefono)) {
+    return { error: 'Inserisci un numero di telefono valido.', status: 400 };
   }
 
   const existing = db
@@ -85,10 +102,10 @@ export function registerPlayer({ nome, cognome, sesso }) {
   try {
     const info = db
       .prepare(
-        `INSERT INTO players (nome, cognome, sesso, taglia)
-         VALUES (?, ?, ?, '')`
+        `INSERT INTO players (nome, cognome, sesso, taglia, telefono)
+         VALUES (?, ?, ?, '', ?)`
       )
-      .run(trimmedNome, trimmedCognome, sesso);
+      .run(trimmedNome, trimmedCognome, sesso, normalizedTelefono);
     const player = rowToPlayer(
       db.prepare('SELECT * FROM players WHERE id = ?').get(info.lastInsertRowid)
     );

@@ -4,6 +4,7 @@ import { registerPlayer, drawPlayer } from '../api.js';
 export default function RegistrationPanel() {
   const [nome, setNome] = useState('');
   const [cognome, setCognome] = useState('');
+  const [telefono, setTelefono] = useState('');
   const [sesso, setSesso] = useState(null);
   const [pendingId, setPendingId] = useState(null);
   const [locked, setLocked] = useState(false);
@@ -24,6 +25,7 @@ export default function RegistrationPanel() {
   const resetForm = useCallback(() => {
     setNome('');
     setCognome('');
+    setTelefono('');
     setSesso(null);
     setPendingId(null);
     setLocked(false);
@@ -38,7 +40,7 @@ export default function RegistrationPanel() {
     if (locked) return;
 
     try {
-      const data = await registerPlayer({ nome, cognome, sesso });
+      const data = await registerPlayer({ nome, cognome, sesso, telefono });
       setPendingId(data.player.id);
       setLocked(true);
       showMsg(
@@ -131,6 +133,20 @@ export default function RegistrationPanel() {
               </button>
             ))}
           </div>
+        </div>
+        <div className="field">
+          <label htmlFor="telefono">Telefono</label>
+          <input
+            id="telefono"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            maxLength={20}
+            placeholder="Es. 333 1234567"
+            value={telefono}
+            disabled={locked}
+            onChange={(e) => setTelefono(e.target.value)}
+          />
         </div>
         <button className="big-btn" type="submit" disabled={locked}>
           Iscriviti

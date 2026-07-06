@@ -1,0 +1,24 @@
+# Solo se usi un dominio proprio con Caddy (non serve con Tailscale)
+# Avvio: docker compose -f docker-compose.yml -f docker-compose.tls.yml up -d
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: smash-bash-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      smash-bash:
+        condition: service_healthy
+
+volumes:
+  caddy-data:
+  caddy-config:

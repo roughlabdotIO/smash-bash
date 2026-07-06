@@ -23,11 +23,17 @@ db.exec(`
     cognome TEXT NOT NULL,
     sesso TEXT NOT NULL CHECK (sesso IN ('M', 'F')),
     taglia TEXT NOT NULL,
+    telefono TEXT NOT NULL DEFAULT '',
     team TEXT CHECK (team IN ('black', 'yellow')),
     drawn_at INTEGER,
     created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
     UNIQUE (nome COLLATE NOCASE, cognome COLLATE NOCASE)
   )
 `);
+
+const playerColumns = db.prepare('PRAGMA table_info(players)').all();
+if (!playerColumns.some((col) => col.name === 'telefono')) {
+  db.exec(`ALTER TABLE players ADD COLUMN telefono TEXT NOT NULL DEFAULT ''`);
+}
 
 export const CAP = 6;

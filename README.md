@@ -16,6 +16,7 @@ Landing page + iscrizione torneo beach volley con sorteggio squadre e roster in 
 | nome       | string |                               |
 | cognome    | string | unique con nome (case-insens.)|
 | sesso      | M / F  |                               |
+| telefono   | string | non esposto nel roster pubblico |
 | team       | string | `black` / `yellow`, null fino al sorteggio |
 | drawn_at   | int    | timestamp ms                  |
 | created_at | int    | timestamp ms                  |
