@@ -34,10 +34,12 @@ export function MatchesResultTable({ matches, title, showMeta = false }) {
           </tr>
         </thead>
         <tbody>
-          {matches.map((match, i) => (
+          {matches.map((match, i) => {
+            const pairsPending = match.ready === false;
+            return (
             <tr
               key={match.id}
-              className={!match.ready ? 'torneo-match-row-pending' : undefined}
+              className={pairsPending ? 'torneo-match-row-pending' : undefined}
             >
               <td>{showMeta ? match.sequence ?? i + 1 : i + 1}</td>
               {showMeta && (
@@ -54,17 +56,18 @@ export function MatchesResultTable({ matches, title, showMeta = false }) {
                 </td>
               )}
               <td>
-                {match.ready ? match.blackPair?.label : '—'}
+                {pairsPending ? '—' : match.blackPair?.label}
               </td>
               <td className="torneo-vs">vs</td>
               <td>
-                {match.ready ? match.yellowPair?.label : '—'}
+                {pairsPending ? '—' : match.yellowPair?.label}
               </td>
               <td className="torneo-score-cell">
                 <MatchResultCell match={match} />
               </td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </div>
