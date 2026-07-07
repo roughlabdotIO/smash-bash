@@ -2,6 +2,7 @@ import { db } from './db.js';
 import {
   computeFase1Standings,
   computeFase2Standings,
+  getRankingState,
   getActivePlayerIds,
   getActivePlayerIdsAfterFase2,
   formatPlayer,
@@ -169,6 +170,7 @@ export function getTournamentState() {
     fase2,
     standings,
     standingsFase2,
+    ranking: getRankingState(fase1, fase2),
     finale: getFinaleState(),
     iquit: getFullIquitState(),
   };

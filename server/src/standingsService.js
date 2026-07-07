@@ -21,39 +21,32 @@ function allPhaseMatchesCompleted(phaseState) {
   return matches.length > 0 && matches.every((m) => m.completed);
 }
 
-function computeStandingsForPhase(phaseState) {
-  if (!allPhaseMatchesCompleted(phaseState)) {
-    return { ready: false };
-  }
+function buildTeamRows(playerStats, team) {
+  const rows = [...playerStats.values()]
+    .filter((s) => s.team === team)
+    .sort((a, b) => {
+      if (a.girone !== b.girone) return a.girone.localeCompare(b.girone);
+      if (a.points !== b.points) return b.points - a.points;
+      return a.player.cognome.localeCompare(b.player.cognome, 'it');
+    })
+    .map((s) => ({
+      id: s.player.id,
+      nome: s.player.nome,
+      cognome: s.player.cognome,
+      sesso: s.player.sesso,
+      girone: s.girone,
+      points: s.points,
+      eliminated: s.eliminated,
+    }));
 
-  const playerStats = new Map();
+  return {
+    rows,
+    eliminated: rows.filter((r) => r.eliminated),
+    active: rows.filter((r) => !r.eliminated),
+  };
+}
 
-  for (const pair of phaseState.pairs) {
-    for (const player of [pair.player1, pair.player2]) {
-      playerStats.set(player.id, {
-        player,
-        points: 0,
-        girone: pair.girone,
-        team: pair.team,
-        eliminated: false,
-      });
-    }
-  }
-
-  const matches = [...phaseState.gironeA.matches, ...phaseState.gironeB.matches];
-  for (const match of matches) {
-    const bp = match.blackPair;
-    const yp = match.yellowPair;
-    for (const id of [bp.player1.id, bp.player2.id]) {
-      const stat = playerStats.get(id);
-      if (stat) stat.points += match.blackScore;
-    }
-    for (const id of [yp.player1.id, yp.player2.id]) {
-      const stat = playerStats.get(id);
-      if (stat) stat.points += match.yellowScore;
-    }
-  }
-
+function applyEliminations(playerStats) {
   const eliminatedIds = new Set();
 
   for (const girone of ['A', 'B']) {
@@ -76,37 +69,70 @@ function computeStandingsForPhase(phaseState) {
     }
   }
 
-  function buildTeam(team) {
-    const rows = [...playerStats.values()]
-      .filter((s) => s.team === team)
-      .sort((a, b) => {
-        if (a.girone !== b.girone) return a.girone.localeCompare(b.girone);
-        if (a.points !== b.points) return b.points - a.points;
-        return a.player.cognome.localeCompare(b.player.cognome, 'it');
-      })
-      .map((s) => ({
-        id: s.player.id,
-        nome: s.player.nome,
-        cognome: s.player.cognome,
-        sesso: s.player.sesso,
-        girone: s.girone,
-        points: s.points,
-        eliminated: s.eliminated,
-      }));
+  return eliminatedIds;
+}
 
-    return {
-      rows,
-      eliminated: rows.filter((r) => r.eliminated),
-      active: rows.filter((r) => !r.eliminated),
-    };
+export function computeLiveStandings(phaseState) {
+  if (!phaseState.gironiDrawn || phaseState.pairs.length === 0) {
+    return { available: false };
+  }
+
+  const playerStats = new Map();
+
+  for (const pair of phaseState.pairs) {
+    for (const player of [pair.player1, pair.player2]) {
+      playerStats.set(player.id, {
+        player,
+        points: 0,
+        girone: pair.girone,
+        team: pair.team,
+        eliminated: false,
+      });
+    }
+  }
+
+  const matches = [...phaseState.gironeA.matches, ...phaseState.gironeB.matches];
+
+  for (const match of matches) {
+    if (!match.completed) continue;
+    const bp = match.blackPair;
+    const yp = match.yellowPair;
+    for (const id of [bp.player1.id, bp.player2.id]) {
+      const stat = playerStats.get(id);
+      if (stat) stat.points += match.blackScore;
+    }
+    for (const id of [yp.player1.id, yp.player2.id]) {
+      const stat = playerStats.get(id);
+      if (stat) stat.points += match.yellowScore;
+    }
+  }
+
+  const matchesPlayed = matches.filter((m) => m.completed).length;
+  const matchesTotal = matches.length;
+  const allComplete = phaseState.matchesDrawn && matchesTotal > 0 && matchesPlayed === matchesTotal;
+
+  let eliminatedIds = [];
+  if (allComplete) {
+    eliminatedIds = [...applyEliminations(playerStats)];
   }
 
   return {
-    ready: true,
-    black: buildTeam('black'),
-    yellow: buildTeam('yellow'),
-    eliminatedIds: [...eliminatedIds],
+    available: true,
+    ready: allComplete,
+    matchesPlayed,
+    matchesTotal,
+    black: buildTeamRows(playerStats, 'black'),
+    yellow: buildTeamRows(playerStats, 'yellow'),
+    eliminatedIds,
   };
+}
+
+function computeStandingsForPhase(phaseState) {
+  const live = computeLiveStandings(phaseState);
+  if (!live.available || !live.ready) {
+    return { ready: false };
+  }
+  return live;
 }
 
 export function computeFase1Standings(fase1State) {
@@ -115,6 +141,13 @@ export function computeFase1Standings(fase1State) {
 
 export function computeFase2Standings(fase2State) {
   return computeStandingsForPhase(fase2State);
+}
+
+export function getRankingState(fase1State, fase2State) {
+  return {
+    fase1: computeLiveStandings(fase1State),
+    fase2: computeLiveStandings(fase2State),
+  };
 }
 
 export function getActivePlayerIds(standings) {

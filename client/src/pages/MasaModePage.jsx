@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { updateMatchResult, updateIquitMatchResult } from '../api.js';
 import { useTournament } from '../hooks/useTournament.js';
+import StandingsPanel from '../components/StandingsPanel.jsx';
 
 function MatchResultForm({ match, label, onSaved, busy, setBusy, setError }) {
   const [blackScore, setBlackScore] = useState(
@@ -199,23 +200,42 @@ export default function MasaModePage() {
       </header>
 
       <main className="torneo-page-main">
-        <div className="wrap">
+        <div className="wrap masa-layout-wrap">
           {loading && <p className="torneo-status">Caricamento…</p>}
           {error && <p className="torneo-status err">{error}</p>}
           {actionError && <p className="torneo-status err">{actionError}</p>}
 
-          {!loading && !hasMatches && (
-            <p className="torneo-status">
-              Nessun match sorteggiato. Vai su{' '}
-              <Link to="/torneo" className="masa-inline-link">
-                /torneo
-              </Link>{' '}
-              e completa il sorteggio.
-            </p>
-          )}
+          {!loading && (
+            <div className="masa-layout">
+              <aside className="masa-standings-sidebar" aria-label="Classifica live">
+                <div className="masa-standings-sticky">
+                  <h2 className="masa-standings-heading">Classifica</h2>
+                  <StandingsPanel
+                    standings={state.ranking?.fase1}
+                    title="Fase 1"
+                    compact
+                  />
+                  <StandingsPanel
+                    standings={state.ranking?.fase2}
+                    title="Fase 2"
+                    compact
+                  />
+                </div>
+              </aside>
 
-          {!loading && hasMatches && (
-            <>
+              <div className="masa-content">
+                {!hasMatches && (
+                  <p className="torneo-status">
+                    Nessun match sorteggiato. Vai su{' '}
+                    <Link to="/torneo" className="masa-inline-link">
+                      /torneo
+                    </Link>{' '}
+                    e completa il sorteggio.
+                  </p>
+                )}
+
+                {hasMatches && (
+                  <>
               {state.fase1.matchesDrawn && (
                 <div className="masa-phase-block">
                   <h2 className="masa-phase-title">Fase 1</h2>
@@ -287,7 +307,10 @@ export default function MasaModePage() {
                   </div>
                 </div>
               )}
-            </>
+                  </>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </main>

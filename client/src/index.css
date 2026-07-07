@@ -1453,6 +1453,8 @@ footer strong {
 .torneo-cta-wrap {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
 .torneo-cta-btn {
@@ -1473,6 +1475,18 @@ footer strong {
 .torneo-cta-btn:hover {
   transform: translate(-2px, -2px);
   box-shadow: 10px 10px 0 var(--ink);
+}
+
+.torneo-cta-btn--secondary {
+  background: transparent;
+  color: var(--sand);
+  border-color: var(--sand);
+  box-shadow: 8px 8px 0 rgba(245, 237, 220, 0.25);
+}
+
+.torneo-cta-btn--secondary:hover {
+  background: rgba(245, 237, 220, 0.08);
+  box-shadow: 10px 10px 0 rgba(245, 237, 220, 0.3);
 }
 
 .torneo-page {
@@ -2018,6 +2032,156 @@ footer strong {
   margin: -8px 0 16px;
 }
 
+.masa-layout-wrap {
+  max-width: 1400px;
+}
+
+.masa-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.masa-standings-sidebar {
+  position: relative;
+}
+
+.masa-standings-sticky {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.masa-standings-heading {
+  margin: 0;
+  font-family: 'Anton', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--yellow);
+}
+
+.masa-content {
+  min-width: 0;
+}
+
+.standings-panel {
+  background: #1c1c1c;
+  border: 2px solid rgba(255, 212, 0, 0.25);
+  padding: 18px;
+}
+
+.standings-panel--compact {
+  padding: 14px;
+}
+
+.standings-panel--empty {
+  padding: 16px;
+}
+
+.standings-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.standings-panel-title {
+  margin: 0;
+  font-family: 'Anton', sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sand);
+}
+
+.standings-panel-note {
+  margin: 0 0 14px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #bdb4a2;
+}
+
+.standings-empty-msg {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #8a8274;
+}
+
+.standings-live-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  background: rgba(143, 227, 136, 0.15);
+  color: #8fe388;
+  border: 1px solid rgba(143, 227, 136, 0.35);
+}
+
+.standings-complete-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  background: rgba(255, 212, 0, 0.12);
+  color: var(--yellow);
+  border: 1px solid rgba(255, 212, 0, 0.35);
+}
+
+.standings-girone-tag {
+  margin-left: 6px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #8a8274;
+}
+
+.recap-table--compact {
+  font-size: 0.78rem;
+}
+
+.recap-table--compact th,
+.recap-table--compact td {
+  padding: 6px 8px;
+}
+
+.ranking-subtitle {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+  color: #bdb4a2;
+  letter-spacing: 0.04em;
+}
+
+.ranking-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.ranking-sections .standings-panel {
+  padding: 24px;
+}
+
+.ranking-sections .standings-panel-title {
+  font-size: 1.4rem;
+}
+
+.standings-panel--embedded {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
 /* ---------- RECAP CLASSIFICA ---------- */
 .recap-section {
   border-top: 2px solid rgba(255, 212, 0, 0.25);
@@ -2282,6 +2446,16 @@ footer strong {
   .masa-save-btn {
     grid-column: 1 / -1;
     width: 100%;
+  }
+
+  .masa-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .masa-standings-sticky {
+    position: static;
+    max-height: none;
+    overflow: visible;
   }
 }
 

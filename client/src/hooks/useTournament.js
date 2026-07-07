@@ -19,6 +19,10 @@ const emptyState = {
   fase2: { ...emptyPhaseState, phase: 'fase-2' },
   standings: { ready: false },
   standingsFase2: { ready: false },
+  ranking: {
+    fase1: { available: false },
+    fase2: { available: false },
+  },
   finale: {
     phase: 'fase-finale',
     pairsDrawn: false,

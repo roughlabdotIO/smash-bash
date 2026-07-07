@@ -149,7 +149,10 @@ export default function LandingPage() {
 
       <section className="torneo-cta-section">
         <div className="wrap torneo-cta-wrap">
-          <Link to="/torneo" className="torneo-cta-btn">
+          <Link to="/ranking" className="torneo-cta-btn torneo-cta-btn--live">
+            Segui il torneo Live
+          </Link>
+          <Link to="/torneo" className="torneo-cta-btn torneo-cta-btn--secondary">
             Vai al Torneo
           </Link>
         </div>
