@@ -17,9 +17,7 @@ function TeamColumn({ team, label, headClass, players, counts }) {
       </div>
       <div className="roster-body">
         {sorted.length === 0 ? (
-          <div className="roster-empty">
-            Ancora nessun giocatore. Sarai tu il primo?
-          </div>
+          <div className="roster-empty">Nessun giocatore in roster.</div>
         ) : (
           <ol>
             {sorted.map((p) => (
@@ -45,8 +43,7 @@ export default function RosterSection({ roster, counts }) {
       <div className="wrap">
         <h2 className="section-title">Roster</h2>
         <p className="section-sub">
-          Le squadre si riempiono in tempo reale a ogni estrazione. Massimo 6
-          maschi e 6 femmine per lato.
+          Le formazioni definitive di Team Black e Team Yellow.
         </p>
         <div className="roster-grid">
           <TeamColumn

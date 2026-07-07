@@ -1445,6 +1445,103 @@ footer strong {
   }
 }
 
+.torneo-cta-section {
+  background: var(--black);
+  padding: 48px 20px 64px;
+}
+
+.torneo-cta-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.torneo-cta-btn {
+  display: inline-block;
+  font-family: 'Anton', sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 20px 48px;
+  background: var(--yellow);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  box-shadow: 8px 8px 0 var(--ink);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.torneo-cta-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 10px 10px 0 var(--ink);
+}
+
+.torneo-page {
+  min-height: 100vh;
+  background: var(--black);
+  color: var(--sand);
+}
+
+.torneo-page-header {
+  padding: 24px 20px;
+  border-bottom: 2px solid rgba(255, 212, 0, 0.35);
+}
+
+.torneo-back-link {
+  display: inline-block;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  text-decoration: none;
+}
+
+.torneo-page-title {
+  margin: 0;
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sand);
+}
+
+.torneo-page-main {
+  padding: 64px 20px;
+}
+
+.torneo-wip {
+  max-width: 520px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 48px 32px;
+  background: #1c1c1c;
+  border: 3px solid var(--yellow);
+  box-shadow: 8px 8px 0 var(--yellow);
+}
+
+.torneo-wip-label {
+  display: inline-block;
+  margin-bottom: 20px;
+  padding: 6px 16px;
+  font-family: 'Anton', sans-serif;
+  font-size: 1.5rem;
+  letter-spacing: 0.2em;
+  color: var(--ink);
+  background: var(--yellow);
+}
+
+.torneo-wip p {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+
+.torneo-wip-sub {
+  color: #bdb4a2;
+  font-size: 0.95rem !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;
