@@ -1,4 +1,4 @@
-function StandingsTable({ team, label, compact, showElimNote, showTiebreak }) {
+function StandingsTable({ team, label, compact, showElimNote, showConceded, cumulative }) {
   if (!team?.rows?.length) return null;
 
   return (
@@ -12,8 +12,10 @@ function StandingsTable({ team, label, compact, showElimNote, showTiebreak }) {
             <tr>
               <th>Giocatore</th>
               {!compact && <th>Girone</th>}
-              <th>Punti fatti</th>
-              {showTiebreak && !compact && <th>Punti subiti</th>}
+              <th>{cumulative ? 'Punti fatti (tot.)' : 'Punti fatti'}</th>
+              {showConceded && !compact && (
+                <th>{cumulative ? 'Punti subiti (tot.)' : 'Punti subiti'}</th>
+              )}
               <th>Stato</th>
             </tr>
           </thead>
@@ -31,7 +33,7 @@ function StandingsTable({ team, label, compact, showElimNote, showTiebreak }) {
                 </td>
                 {!compact && <td>Girone {row.girone}</td>}
                 <td className="recap-points">{row.points}</td>
-                {showTiebreak && !compact && (
+                {showConceded && !compact && (
                   <td className="recap-points-conceded">{row.pointsConceded}</td>
                 )}
                 <td>
@@ -93,6 +95,9 @@ export default function StandingsPanel({
             <span className="standings-live-badge">Live · {progress}</span>
           )}
           {standings.ready && <span className="standings-complete-badge">Fase conclusa</span>}
+          {standings.cumulative && (
+            <span className="standings-cumulative-badge">Fase 1 + 2</span>
+          )}
         </div>
       )}
       {note && <p className="standings-panel-note">{note}</p>}
@@ -103,14 +108,16 @@ export default function StandingsPanel({
           label="Black"
           compact={compact}
           showElimNote={standings.ready}
-          showTiebreak={standings.ready}
+          showConceded={standings.cumulative || standings.ready}
+          cumulative={standings.cumulative}
         />
         <StandingsTable
           team={standings.yellow}
           label="Yellow"
           compact={compact}
           showElimNote={standings.ready}
-          showTiebreak={standings.ready}
+          showConceded={standings.cumulative || standings.ready}
+          cumulative={standings.cumulative}
         />
       </div>
 

@@ -102,12 +102,24 @@ function addMatchPoints(playerStats, match) {
   }
 }
 
-export function computeLiveStandings(phaseState) {
+function getPhaseMatches(phaseState) {
+  return [...phaseState.gironeA.matches, ...phaseState.gironeB.matches];
+}
+
+function addCompletedMatchPoints(playerStats, phaseState) {
+  for (const match of getPhaseMatches(phaseState)) {
+    if (!match.completed) continue;
+    addMatchPoints(playerStats, match);
+  }
+}
+
+export function computeLiveStandings(phaseState, priorPhaseState = null) {
   if (!phaseState.gironiDrawn || phaseState.pairs.length === 0) {
     return { available: false };
   }
 
   const playerStats = new Map();
+  const cumulative = Boolean(priorPhaseState);
 
   for (const pair of phaseState.pairs) {
     for (const player of [pair.player1, pair.player2]) {
@@ -123,12 +135,12 @@ export function computeLiveStandings(phaseState) {
     }
   }
 
-  const matches = [...phaseState.gironeA.matches, ...phaseState.gironeB.matches];
-
-  for (const match of matches) {
-    if (!match.completed) continue;
-    addMatchPoints(playerStats, match);
+  if (priorPhaseState) {
+    addCompletedMatchPoints(playerStats, priorPhaseState);
   }
+
+  const matches = getPhaseMatches(phaseState);
+  addCompletedMatchPoints(playerStats, phaseState);
 
   const matchesPlayed = matches.filter((m) => m.completed).length;
   const matchesTotal = matches.length;
@@ -142,6 +154,7 @@ export function computeLiveStandings(phaseState) {
   return {
     available: true,
     ready: allComplete,
+    cumulative,
     matchesPlayed,
     matchesTotal,
     black: buildTeamRows(playerStats, 'black'),
@@ -150,8 +163,8 @@ export function computeLiveStandings(phaseState) {
   };
 }
 
-function computeStandingsForPhase(phaseState) {
-  const live = computeLiveStandings(phaseState);
+function computeStandingsForPhase(phaseState, priorPhaseState = null) {
+  const live = computeLiveStandings(phaseState, priorPhaseState);
   if (!live.available || !live.ready) {
     return { ready: false };
   }
@@ -162,14 +175,14 @@ export function computeFase1Standings(fase1State) {
   return computeStandingsForPhase(fase1State);
 }
 
-export function computeFase2Standings(fase2State) {
-  return computeStandingsForPhase(fase2State);
+export function computeFase2Standings(fase2State, fase1State) {
+  return computeStandingsForPhase(fase2State, fase1State);
 }
 
 export function getRankingState(fase1State, fase2State) {
   return {
     fase1: computeLiveStandings(fase1State),
-    fase2: computeLiveStandings(fase2State),
+    fase2: computeLiveStandings(fase2State, fase1State),
   };
 }
 

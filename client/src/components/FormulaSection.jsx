@@ -71,7 +71,7 @@ const PHASES = [
       {
         title: 'Eliminazioni',
         items: [
-          'A conclusione della Fase 2 escono altri giocatori: 2 donne e 2 uomini per girone e per team (stesso criterio: meno punti fatti, a parità più punti subiti).',
+          'A conclusione della Fase 2 escono altri giocatori: 2 donne e 2 uomini per girone e per team. Punti fatti e subiti si sommano tra Fase 1 e Fase 2; a parità esce chi ha subito più punti.',
           'Si uniscono all’iQuit Champ in corso sul campo 4.',
         ],
       },

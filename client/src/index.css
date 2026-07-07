@@ -2138,6 +2138,17 @@ footer strong {
   border: 1px solid rgba(255, 212, 0, 0.35);
 }
 
+.standings-cumulative-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  background: rgba(189, 180, 162, 0.12);
+  color: #bdb4a2;
+  border: 1px solid rgba(189, 180, 162, 0.35);
+}
+
 .standings-girone-tag {
   margin-left: 6px;
   font-size: 0.62rem;

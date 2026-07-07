@@ -262,7 +262,7 @@ export function getTournamentState() {
   const fase1 = getPhaseState(FASE1);
   const fase2 = getPhaseState(FASE2);
   const standings = computeFase1Standings(fase1);
-  const standingsFase2 = computeFase2Standings(fase2);
+  const standingsFase2 = computeFase2Standings(fase2, fase1);
 
   return {
     fase1,
@@ -592,8 +592,9 @@ export function drawMatchesFase2() {
 }
 
 export function drawFinalePairs() {
+  const fase1 = getPhaseState(FASE1);
   const fase2 = getPhaseState(FASE2);
-  const standingsFase2 = computeFase2Standings(fase2);
+  const standingsFase2 = computeFase2Standings(fase2, fase1);
   if (!standingsFase2.ready) {
     return { error: 'Inserisci tutti i risultati della Fase 2 prima di continuare.', status: 400 };
   }
@@ -734,8 +735,9 @@ export function updateIquitResult(matchId, scores) {
 }
 
 export function startIquitPairsBatch2() {
+  const fase1 = getPhaseState(FASE1);
   const fase2 = getPhaseState(FASE2);
-  const standingsFase2 = computeFase2Standings(fase2);
+  const standingsFase2 = computeFase2Standings(fase2, fase1);
   if (!standingsFase2.ready) {
     return { error: 'Inserisci tutti i risultati della Fase 2.', status: 400 };
   }
