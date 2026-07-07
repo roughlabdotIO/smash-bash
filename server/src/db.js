@@ -58,6 +58,46 @@ db.exec(`
     girone TEXT NOT NULL CHECK (girone IN ('A', 'B')),
     black_pair_id INTEGER NOT NULL REFERENCES tournament_pairs(id),
     yellow_pair_id INTEGER NOT NULL REFERENCES tournament_pairs(id),
+    black_score INTEGER,
+    yellow_score INTEGER,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+  )
+`);
+
+const matchColumns = db.prepare('PRAGMA table_info(tournament_matches)').all();
+if (!matchColumns.some((col) => col.name === 'black_score')) {
+  db.exec(`ALTER TABLE tournament_matches ADD COLUMN black_score INTEGER`);
+}
+if (!matchColumns.some((col) => col.name === 'yellow_score')) {
+  db.exec(`ALTER TABLE tournament_matches ADD COLUMN yellow_score INTEGER`);
+}
+if (!matchColumns.some((col) => col.name === 'match_label')) {
+  db.exec(`ALTER TABLE tournament_matches ADD COLUMN match_label TEXT`);
+}
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS iquit_pairs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    batch INTEGER NOT NULL DEFAULT 1,
+    team TEXT NOT NULL CHECK (team IN ('black', 'yellow')),
+    player1_id INTEGER NOT NULL REFERENCES players(id),
+    player2_id INTEGER NOT NULL REFERENCES players(id),
+    mixed INTEGER NOT NULL DEFAULT 1,
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+  )
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS iquit_matches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    batch INTEGER NOT NULL DEFAULT 1,
+    sequence INTEGER NOT NULL,
+    black_pair_id INTEGER REFERENCES iquit_pairs(id),
+    yellow_pair_id INTEGER REFERENCES iquit_pairs(id),
+    holder_from_match_id INTEGER REFERENCES iquit_matches(id),
+    challenger_pair_id INTEGER REFERENCES iquit_pairs(id),
+    black_score INTEGER,
+    yellow_score INTEGER,
     created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
   )
 `);

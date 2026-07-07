@@ -11,11 +11,26 @@ import {
   getRosterPayload,
 } from './playerService.js';
 import {
-  getFase1State,
+  getTournamentState,
   drawPairs,
   drawGironi,
   drawMatches,
+  drawPairsFase2,
+  drawGironiFase2,
+  drawMatchesFase2,
   resetFase1,
+  resetFase2,
+  resetFinale,
+  updateMatchResult,
+  drawFinalePairs,
+  drawFinaleSemifinals,
+  drawFinaleTiebreak,
+  startIquitPairs,
+  startIquitMatches,
+  startIquitPairsBatch2,
+  startIquitMatchesBatch2,
+  updateIquitResult,
+  resetIquitChamp,
 } from './tournamentService.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -49,7 +64,7 @@ const corsOptions = {
   origin(origin, callback) {
     callback(null, isAllowedOrigin(origin));
   },
-  methods: ['GET', 'POST'],
+  methods: ['GET', 'POST', 'PATCH'],
 };
 
 const io = new Server(httpServer, {
@@ -57,7 +72,7 @@ const io = new Server(httpServer, {
     origin(origin, callback) {
       callback(null, isAllowedOrigin(origin));
     },
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST', 'PATCH'],
   },
 });
 
@@ -69,7 +84,7 @@ function broadcastRoster() {
 }
 
 function broadcastTournament() {
-  io.emit('tournament:update', getFase1State());
+  io.emit('tournament:update', getTournamentState());
 }
 
 app.get('/api/health', (_req, res) => {
@@ -80,8 +95,12 @@ app.get('/api/roster', (_req, res) => {
   res.json(getRosterPayload());
 });
 
+app.get('/api/tournament', (_req, res) => {
+  res.json(getTournamentState());
+});
+
 app.get('/api/tournament/fase-1', (_req, res) => {
-  res.json(getFase1State());
+  res.json(getTournamentState().fase1);
 });
 
 app.post('/api/tournament/fase-1/draw-pairs', (_req, res) => {
@@ -111,6 +130,132 @@ app.post('/api/tournament/fase-1/reset', (_req, res) => {
   res.json(result.state);
 });
 
+app.post('/api/tournament/fase-2/draw-pairs', (_req, res) => {
+  const result = drawPairsFase2();
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  broadcastTournament();
+  res.json(result.state);
+});
+
+app.post('/api/tournament/fase-2/draw-gironi', (_req, res) => {
+  const result = drawGironiFase2();
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  broadcastTournament();
+  res.json(result.state);
+});
+
+app.post('/api/tournament/fase-2/draw-matches', (_req, res) => {
+  const result = drawMatchesFase2();
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  broadcastTournament();
+  res.json(result.state);
+});
+
+app.post('/api/tournament/fase-2/reset', (_req, res) => {
+  const result = resetFase2();
+  broadcastTournament();
+  res.json(result.state);
+});
+
+app.post('/api/tournament/finale/draw-pairs', (_req, res) => {
+  const result = drawFinalePairs();
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  broadcastTournament();
+  res.json(result.state);
+});
+
+app.post('/api/tournament/finale/draw-semifinals', (_req, res) => {
+  const result = drawFinaleSemifinals();
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  broadcastTournament();
+  res.json(result.state);
+});
+
+app.post('/api/tournament/finale/draw-tiebreak', (_req, res) => {
+  const result = drawFinaleTiebreak();
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  broadcastTournament();
+  res.json(result.state);
+});
+
+app.post('/api/tournament/finale/reset', (_req, res) => {
+  const result = resetFinale();
+  broadcastTournament();
+  res.json(result.state);
+});
+
+app.post('/api/tournament/iquit/draw-pairs', (_req, res) => {
+  const result = startIquitPairs();
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  broadcastTournament();
+  res.json(result.state);
+});
+
+app.post('/api/tournament/iquit/draw-matches', (_req, res) => {
+  const result = startIquitMatches();
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  broadcastTournament();
+  res.json(result.state);
+});
+
+app.post('/api/tournament/iquit/draw-pairs-batch2', (_req, res) => {
+  const result = startIquitPairsBatch2();
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  broadcastTournament();
+  res.json(result.state);
+});
+
+app.post('/api/tournament/iquit/draw-matches-batch2', (_req, res) => {
+  const result = startIquitMatchesBatch2();
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  broadcastTournament();
+  res.json(result.state);
+});
+
+app.post('/api/tournament/iquit/reset', (_req, res) => {
+  const result = resetIquitChamp();
+  broadcastTournament();
+  res.json(result.state);
+});
+
+app.patch('/api/tournament/iquit/matches/:id/result', (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'ID non valido.' });
+  }
+
+  const result = updateIquitResult(id, {
+    blackScore: req.body?.blackScore,
+    yellowScore: req.body?.yellowScore,
+  });
+
+  if (result.error) {
+    return res.status(result.status).json({ error: result.error });
+  }
+
+  broadcastTournament();
+  res.json(result.state);
+});
+
+app.patch('/api/tournament/matches/:id/result', (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ error: 'ID non valido.' });
+  }
+
+  const result = updateMatchResult(id, {
+    blackScore: req.body?.blackScore,
+    yellowScore: req.body?.yellowScore,
+  });
+
+  if (result.error) {
+    return res.status(result.status).json({ error: result.error });
+  }
+
+  broadcastTournament();
+  res.json(result.state);
+});
+
 app.post('/api/players', (req, res) => {
   const result = registerPlayer(req.body);
   if (result.error) {
@@ -136,7 +281,7 @@ app.post('/api/players/:id/draw', (req, res) => {
 
 io.on('connection', (socket) => {
   socket.emit('roster:update', getRosterPayload());
-  socket.emit('tournament:update', getFase1State());
+  socket.emit('tournament:update', getTournamentState());
 });
 
 if (process.env.NODE_ENV === 'production') {

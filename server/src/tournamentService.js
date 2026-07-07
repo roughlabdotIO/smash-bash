@@ -1,6 +1,25 @@
 import { db } from './db.js';
+import {
+  computeFase1Standings,
+  computeFase2Standings,
+  getActivePlayerIds,
+  getActivePlayerIdsAfterFase2,
+  formatPlayer,
+  getPlayerById,
+} from './standingsService.js';
+import {
+  getFullIquitState,
+  drawIquitPairs,
+  drawIquitMatches,
+  drawIquitPairsBatch2,
+  drawIquitMatchesBatch2,
+  resetIquit,
+  updateIquitMatchResult,
+} from './iquitService.js';
 
-const PHASE = 'fase-1';
+const FASE1 = 'fase-1';
+const FASE2 = 'fase-2';
+const FASE_FINALE = 'fase-finale';
 
 function shuffle(arr) {
   const a = [...arr];
@@ -9,21 +28,6 @@ function shuffle(arr) {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
-}
-
-function getPlayerById(id) {
-  return db.prepare('SELECT * FROM players WHERE id = ?').get(id);
-}
-
-function formatPlayer(row) {
-  if (!row) return null;
-  return {
-    id: row.id,
-    nome: row.nome,
-    cognome: row.cognome,
-    sesso: row.sesso,
-    team: row.team,
-  };
 }
 
 function formPairsForTeam(players) {
@@ -63,33 +67,40 @@ function rowToPair(row) {
     mixed: Boolean(row.mixed),
     player1: p1,
     player2: p2,
-    label: `${p1.nome} ${p1.cognome} + ${p2.nome} ${p2.cognome}`,
+    label: `${p1.nome} ${p1.cognome} - ${p2.nome} ${p2.cognome}`,
   };
 }
 
 function rowToMatch(row) {
   const blackPair = db.prepare('SELECT * FROM tournament_pairs WHERE id = ?').get(row.black_pair_id);
   const yellowPair = db.prepare('SELECT * FROM tournament_pairs WHERE id = ?').get(row.yellow_pair_id);
+  const blackScore = row.black_score ?? null;
+  const yellowScore = row.yellow_score ?? null;
   return {
     id: row.id,
+    phase: row.phase,
     girone: row.girone,
+    matchLabel: row.match_label ?? null,
     blackPair: rowToPair(blackPair),
     yellowPair: rowToPair(yellowPair),
+    blackScore,
+    yellowScore,
+    completed: blackScore !== null && yellowScore !== null,
   };
 }
 
-function getStateFlags() {
+function getStateFlags(phase) {
   const pairsCount = db
     .prepare(`SELECT COUNT(*) AS n FROM tournament_pairs WHERE phase = ?`)
-    .get(PHASE).n;
+    .get(phase).n;
   const gironiCount = db
     .prepare(
       `SELECT COUNT(*) AS n FROM tournament_pairs WHERE phase = ? AND girone IS NOT NULL`
     )
-    .get(PHASE).n;
+    .get(phase).n;
   const matchesCount = db
     .prepare(`SELECT COUNT(*) AS n FROM tournament_matches WHERE phase = ?`)
-    .get(PHASE).n;
+    .get(phase).n;
 
   return {
     pairsDrawn: pairsCount > 0,
@@ -98,55 +109,212 @@ function getStateFlags() {
   };
 }
 
-export function getFase1State() {
-  const flags = getStateFlags();
+function getPhaseState(phase) {
+  const flags = getStateFlags(phase);
   const pairRows = db
-    .prepare(
-      `SELECT * FROM tournament_pairs WHERE phase = ? ORDER BY team, id`
-    )
-    .all(PHASE);
-  const pairs = pairRows.map(rowToPair);
+    .prepare(`SELECT * FROM tournament_pairs WHERE phase = ? ORDER BY team, id`)
+    .all(phase);
+  let pairs = pairRows.map(rowToPair);
+
+  if (phase === FASE2) {
+    pairs = pairs.map((pair) => {
+      const g1 = getPlayerFase1Girone(pair.player1.id);
+      const g2 = getPlayerFase1Girone(pair.player2.id);
+      const fase1Girone = g1 && g2 && g1 === g2 ? g1 : g1 || g2 || null;
+      return {
+        ...pair,
+        fase1Girone,
+        rotatedFrom: fase1Girone,
+        rotatedTo: fase1Girone ? rotateGirone(fase1Girone) : pair.girone,
+      };
+    });
+  }
 
   const matchRows = db
-    .prepare(
-      `SELECT * FROM tournament_matches WHERE phase = ? ORDER BY girone, id`
-    )
-    .all(PHASE);
+    .prepare(`SELECT * FROM tournament_matches WHERE phase = ? ORDER BY girone, id`)
+    .all(phase);
   const matches = matchRows.map(rowToMatch);
 
-  const gironeA = {
-    pairs: pairs.filter((p) => p.girone === 'A'),
-    matches: matches.filter((m) => m.girone === 'A'),
-  };
-  const gironeB = {
-    pairs: pairs.filter((p) => p.girone === 'B'),
-    matches: matches.filter((m) => m.girone === 'B'),
-  };
-
   return {
-    phase: PHASE,
+    phase,
     ...flags,
     pairs,
-    gironeA,
-    gironeB,
+    gironeA: {
+      pairs: pairs.filter((p) => p.girone === 'A'),
+      matches: matches.filter((m) => m.girone === 'A'),
+    },
+    gironeB: {
+      pairs: pairs.filter((p) => p.girone === 'B'),
+      matches: matches.filter((m) => m.girone === 'B'),
+    },
   };
 }
 
-export function drawPairs() {
-  const flags = getStateFlags();
+export function getFase1State() {
+  return getPhaseState(FASE1);
+}
+
+export function getFase2State() {
+  return getPhaseState(FASE2);
+}
+
+export function getTournamentState() {
+  const fase1 = getPhaseState(FASE1);
+  const fase2 = getPhaseState(FASE2);
+  const standings = computeFase1Standings(fase1);
+  const standingsFase2 = computeFase2Standings(fase2);
+
+  return {
+    fase1,
+    fase2,
+    standings,
+    standingsFase2,
+    finale: getFinaleState(),
+    iquit: getFullIquitState(),
+  };
+}
+
+function getWinnerPairFromMatch(match) {
+  if (!match.completed) return null;
+  if (match.blackScore > match.yellowScore) return match.blackPair;
+  if (match.yellowScore > match.blackScore) return match.yellowPair;
+  return null;
+}
+
+function getFinaleState() {
+  const flags = getStateFlags(FASE_FINALE);
+  const pairRows = db
+    .prepare(`SELECT * FROM tournament_pairs WHERE phase = ? ORDER BY team, id`)
+    .all(FASE_FINALE);
+  const pairs = pairRows.map(rowToPair);
+
+  const matchRows = db
+    .prepare(`SELECT * FROM tournament_matches WHERE phase = ? ORDER BY id`)
+    .all(FASE_FINALE);
+  const matches = matchRows.map(rowToMatch);
+  const semifinals = matches.filter((m) => m.matchLabel === 'semi-1' || m.matchLabel === 'semi-2');
+  const tiebreak = matches.find((m) => m.matchLabel === 'tiebreak') ?? null;
+
+  function teamChampionFromSemis(team) {
+    for (const m of semifinals) {
+      const winner = getWinnerPairFromMatch(m);
+      if (winner?.team === team) return winner;
+    }
+    return null;
+  }
+
+  let blackChampion = teamChampionFromSemis('black');
+  let yellowChampion = teamChampionFromSemis('yellow');
+
+  if (tiebreak?.completed) {
+    const tbWinner = getWinnerPairFromMatch(tiebreak);
+    if (tbWinner?.team === 'black') blackChampion = tbWinner;
+    if (tbWinner?.team === 'yellow') yellowChampion = tbWinner;
+  }
+
+  return {
+    phase: FASE_FINALE,
+    pairsDrawn: flags.pairsDrawn,
+    semifinalsDrawn: semifinals.length === 2,
+    tiebreakDrawn: Boolean(tiebreak),
+    pairs,
+    semifinals,
+    tiebreak,
+    blackChampion,
+    yellowChampion,
+  };
+}
+
+function getPlayerFase1Girone(playerId) {
+  const row = db
+    .prepare(
+      `SELECT girone FROM tournament_pairs
+       WHERE phase = ? AND girone IS NOT NULL
+         AND (player1_id = ? OR player2_id = ?)`
+    )
+    .get(FASE1, playerId, playerId);
+  return row?.girone ?? null;
+}
+
+function rotateGirone(girone) {
+  if (girone === 'A') return 'B';
+  if (girone === 'B') return 'A';
+  return null;
+}
+
+function assignBlackGironiFase2(blackPairs) {
+  const perGirone = blackPairs.length / 2;
+  // Rotazione: chi era nel Girone A in Fase 1 va nel B (e viceversa)
+  const items = shuffle(blackPairs).map((pair) => {
+    const g1 = getPlayerFase1Girone(pair.player1_id);
+    const g2 = getPlayerFase1Girone(pair.player2_id);
+
+    if (g1 && g2 && g1 === g2) {
+      return { pair, girone: rotateGirone(g1), flexible: false };
+    }
+
+    const ref = g1 || g2;
+    return {
+      pair,
+      girone: ref ? rotateGirone(ref) : null,
+      flexible: true,
+    };
+  });
+
+  const assignedA = [];
+  const assignedB = [];
+  const pending = [];
+
+  for (const item of items) {
+    if (!item.flexible && item.girone === 'A') assignedA.push(item);
+    else if (!item.flexible && item.girone === 'B') assignedB.push(item);
+    else pending.push(item);
+  }
+
+  for (const item of pending) {
+    if (assignedA.length < perGirone) {
+      item.girone = 'A';
+      assignedA.push(item);
+    } else {
+      item.girone = 'B';
+      assignedB.push(item);
+    }
+  }
+
+  while (assignedA.length > perGirone && assignedB.length < perGirone) {
+    const moved = assignedA.pop();
+    moved.girone = 'B';
+    assignedB.push(moved);
+  }
+  while (assignedB.length > perGirone && assignedA.length < perGirone) {
+    const moved = assignedB.pop();
+    moved.girone = 'A';
+    assignedA.push(moved);
+  }
+
+  return [...assignedA, ...assignedB];
+}
+
+function drawPairsForPhase(phase, playerIds = null) {
+  const flags = getStateFlags(phase);
   if (flags.pairsDrawn) {
     return { error: 'Le coppie sono già state estratte.', status: 409 };
   }
 
-  const players = db
+  let players = db
     .prepare(`SELECT * FROM players WHERE team IS NOT NULL ORDER BY id`)
     .all();
+
+  if (playerIds) {
+    const allowed = new Set(playerIds);
+    players = players.filter((p) => allowed.has(p.id));
+  }
 
   const blackPlayers = players.filter((p) => p.team === 'black');
   const yellowPlayers = players.filter((p) => p.team === 'yellow');
 
   if (blackPlayers.length < 2 || yellowPlayers.length < 2) {
-    return { error: 'Servono almeno 2 giocatori per squadra.', status: 400 };
+    return { error: 'Servono almeno 2 giocatori attivi per squadra.', status: 400 };
   }
 
   const blackPairs = formPairsForTeam(blackPlayers);
@@ -160,19 +328,34 @@ export function drawPairs() {
 
   const tx = db.transaction(() => {
     for (const pair of blackPairs) {
-      insert.run(PHASE, 'black', pair.player1.id, pair.player2.id, pair.mixed ? 1 : 0, now);
+      insert.run(phase, 'black', pair.player1.id, pair.player2.id, pair.mixed ? 1 : 0, now);
     }
     for (const pair of yellowPairs) {
-      insert.run(PHASE, 'yellow', pair.player1.id, pair.player2.id, pair.mixed ? 1 : 0, now);
+      insert.run(phase, 'yellow', pair.player1.id, pair.player2.id, pair.mixed ? 1 : 0, now);
     }
   });
 
   tx();
-  return { state: getFase1State() };
+  return { state: getTournamentState() };
 }
 
-export function drawGironi() {
-  const flags = getStateFlags();
+export function drawPairs() {
+  return drawPairsForPhase(FASE1);
+}
+
+export function drawPairsFase2() {
+  const fase1 = getPhaseState(FASE1);
+  const standings = computeFase1Standings(fase1);
+  if (!standings.ready) {
+    return { error: 'Inserisci tutti i risultati della Fase 1 prima di continuare.', status: 400 };
+  }
+
+  const activeIds = getActivePlayerIds(standings);
+  return drawPairsForPhase(FASE2, activeIds);
+}
+
+function drawGironiForPhase(phase, assignBlack) {
+  const flags = getStateFlags(phase);
   if (!flags.pairsDrawn) {
     return { error: 'Estrai prima le coppie.', status: 400 };
   }
@@ -182,37 +365,56 @@ export function drawGironi() {
 
   const blackPairs = db
     .prepare(`SELECT * FROM tournament_pairs WHERE phase = ? AND team = 'black'`)
-    .all(PHASE);
+    .all(phase);
   const yellowPairs = db
     .prepare(`SELECT * FROM tournament_pairs WHERE phase = ? AND team = 'yellow'`)
-    .all(PHASE);
+    .all(phase);
 
-  if (blackPairs.length !== 6 || yellowPairs.length !== 6) {
+  if (blackPairs.length !== yellowPairs.length || blackPairs.length < 2 || blackPairs.length % 2 !== 0) {
     return {
-      error: `Servono 6 coppie per squadra (Black: ${blackPairs.length}, Yellow: ${yellowPairs.length}).`,
+      error: `Numero coppie non valido (Black: ${blackPairs.length}, Yellow: ${yellowPairs.length}).`,
       status: 400,
     };
   }
 
-  const blackShuffled = shuffle(blackPairs);
+  const perGirone = blackPairs.length / 2;
   const yellowShuffled = shuffle(yellowPairs);
+  const blackAssignments = assignBlack(blackPairs);
   const update = db.prepare(`UPDATE tournament_pairs SET girone = ? WHERE id = ?`);
 
   const tx = db.transaction(() => {
-    blackShuffled.forEach((pair, i) => {
-      update.run(i < 3 ? 'A' : 'B', pair.id);
-    });
     yellowShuffled.forEach((pair, i) => {
-      update.run(i < 3 ? 'A' : 'B', pair.id);
+      update.run(i < perGirone ? 'A' : 'B', pair.id);
+    });
+    blackAssignments.forEach(({ pair, girone }) => {
+      update.run(girone, pair.id);
     });
   });
 
   tx();
-  return { state: getFase1State() };
+  return { state: getTournamentState() };
 }
 
-export function drawMatches() {
-  const flags = getStateFlags();
+export function drawGironi() {
+  return drawGironiForPhase(FASE1, (blackPairs) => {
+    const perGirone = blackPairs.length / 2;
+    return shuffle(blackPairs).map((pair, i) => ({
+      pair,
+      girone: i < perGirone ? 'A' : 'B',
+    }));
+  });
+}
+
+export function drawGironiFase2() {
+  const fase1 = getStateFlags(FASE1);
+  if (!fase1.gironiDrawn) {
+    return { error: 'Completa prima i gironi della Fase 1.', status: 400 };
+  }
+  return drawGironiForPhase(FASE2, assignBlackGironiFase2);
+}
+
+function drawMatchesForPhase(phase) {
+  const flags = getStateFlags(phase);
   if (!flags.gironiDrawn) {
     return { error: 'Estrai prima i gironi.', status: 400 };
   }
@@ -233,22 +435,22 @@ export function drawMatches() {
           .prepare(
             `SELECT * FROM tournament_pairs WHERE phase = ? AND girone = ? AND team = 'black'`
           )
-          .all(PHASE, girone)
+          .all(phase, girone)
       );
       const yellowInGirone = shuffle(
         db
           .prepare(
             `SELECT * FROM tournament_pairs WHERE phase = ? AND girone = ? AND team = 'yellow'`
           )
-          .all(PHASE, girone)
+          .all(phase, girone)
       );
 
-      if (blackInGirone.length !== 3 || yellowInGirone.length !== 3) {
+      if (blackInGirone.length !== yellowInGirone.length || blackInGirone.length === 0) {
         throw new Error('GIRONI_INVALID');
       }
 
-      for (let i = 0; i < 3; i += 1) {
-        insert.run(PHASE, girone, blackInGirone[i].id, yellowInGirone[i].id, now);
+      for (let i = 0; i < blackInGirone.length; i += 1) {
+        insert.run(phase, girone, blackInGirone[i].id, yellowInGirone[i].id, now);
       }
     }
   });
@@ -257,19 +459,220 @@ export function drawMatches() {
     tx();
   } catch (err) {
     if (err.message === 'GIRONI_INVALID') {
-      return { error: 'Ogni girone deve avere 3 coppie Black e 3 Yellow.', status: 400 };
+      return { error: 'Ogni girone deve avere lo stesso numero di coppie Black e Yellow.', status: 400 };
     }
     throw err;
   }
 
-  return { state: getFase1State() };
+  return { state: getTournamentState() };
+}
+
+export function drawMatches() {
+  return drawMatchesForPhase(FASE1);
+}
+
+export function drawMatchesFase2() {
+  return drawMatchesForPhase(FASE2);
+}
+
+export function drawFinalePairs() {
+  const fase2 = getPhaseState(FASE2);
+  const standingsFase2 = computeFase2Standings(fase2);
+  if (!standingsFase2.ready) {
+    return { error: 'Inserisci tutti i risultati della Fase 2 prima di continuare.', status: 400 };
+  }
+
+  const activeIds = getActivePlayerIdsAfterFase2(
+    computeFase1Standings(getPhaseState(FASE1)),
+    standingsFase2
+  );
+  return drawPairsForPhase(FASE_FINALE, activeIds);
+}
+
+export function drawFinaleSemifinals() {
+  const flags = getStateFlags(FASE_FINALE);
+  if (!flags.pairsDrawn) {
+    return { error: 'Estrai prima le coppie della finale.', status: 400 };
+  }
+
+  const existing = db
+    .prepare(
+      `SELECT COUNT(*) AS n FROM tournament_matches WHERE phase = ? AND match_label IN ('semi-1', 'semi-2')`
+    )
+    .get(FASE_FINALE).n;
+  if (existing > 0) {
+    return { error: 'Le semifinali sono già state sorteggiate.', status: 409 };
+  }
+
+  const blackPairs = shuffle(
+    db.prepare(`SELECT * FROM tournament_pairs WHERE phase = ? AND team = 'black'`).all(FASE_FINALE)
+  );
+  const yellowPairs = shuffle(
+    db.prepare(`SELECT * FROM tournament_pairs WHERE phase = ? AND team = 'yellow'`).all(FASE_FINALE)
+  );
+
+  if (blackPairs.length !== 2 || yellowPairs.length !== 2) {
+    return {
+      error: `Servono 2 coppie per squadra in finale (Black: ${blackPairs.length}, Yellow: ${yellowPairs.length}).`,
+      status: 400,
+    };
+  }
+
+  const now = Date.now();
+  const insert = db.prepare(
+    `INSERT INTO tournament_matches (phase, girone, black_pair_id, yellow_pair_id, match_label, created_at)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  );
+
+  const tx = db.transaction(() => {
+    insert.run(FASE_FINALE, 'A', blackPairs[0].id, yellowPairs[0].id, 'semi-1', now);
+    insert.run(FASE_FINALE, 'B', blackPairs[1].id, yellowPairs[1].id, 'semi-2', now);
+  });
+
+  tx();
+  return { state: getTournamentState() };
+}
+
+export function drawFinaleTiebreak() {
+  const finale = getFinaleState();
+  if (!finale.semifinalsDrawn) {
+    return { error: 'Sorteggia prima le semifinali.', status: 400 };
+  }
+  if (finale.tiebreakDrawn) {
+    return { error: 'Lo spareggio è già stato estratto.', status: 409 };
+  }
+  if (!finale.semifinals.every((m) => m.completed)) {
+    return { error: 'Completa prima entrambe le semifinali.', status: 400 };
+  }
+
+  const blackPairs = shuffle(
+    db.prepare(`SELECT * FROM tournament_pairs WHERE phase = ? AND team = 'black'`).all(FASE_FINALE)
+  );
+  const yellowPairs = shuffle(
+    db.prepare(`SELECT * FROM tournament_pairs WHERE phase = ? AND team = 'yellow'`).all(FASE_FINALE)
+  );
+
+  const now = Date.now();
+  db.prepare(
+    `INSERT INTO tournament_matches (phase, girone, black_pair_id, yellow_pair_id, match_label, created_at)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  ).run(FASE_FINALE, 'A', blackPairs[0].id, yellowPairs[0].id, 'tiebreak', now);
+
+  return { state: getTournamentState() };
+}
+
+export function updateMatchResult(matchId, { blackScore, yellowScore }) {
+  const black = Number(blackScore);
+  const yellow = Number(yellowScore);
+
+  if (
+    !Number.isInteger(black) ||
+    !Number.isInteger(yellow) ||
+    black < 0 ||
+    yellow < 0 ||
+    black > 99 ||
+    yellow > 99
+  ) {
+    return { error: 'Inserisci punteggi validi (0–99).', status: 400 };
+  }
+
+  const row = db.prepare('SELECT * FROM tournament_matches WHERE id = ?').get(matchId);
+  if (!row) {
+    return { error: 'Match non trovato.', status: 404 };
+  }
+
+  db.prepare(
+    `UPDATE tournament_matches SET black_score = ?, yellow_score = ? WHERE id = ?`
+  ).run(black, yellow, matchId);
+
+  return { state: getTournamentState() };
+}
+
+export function startIquitPairs() {
+  const fase1 = getPhaseState(FASE1);
+  const standings = computeFase1Standings(fase1);
+  if (!standings.ready) {
+    return { error: 'Inserisci tutti i risultati della Fase 1.', status: 400 };
+  }
+
+  const fase2 = getStateFlags(FASE2);
+  if (!fase2.gironiDrawn) {
+    return { error: 'Estrai prima i gironi della Fase 2.', status: 400 };
+  }
+
+  const result = drawIquitPairs(standings.eliminatedIds);
+  if (result.error) return result;
+  return { state: getTournamentState() };
+}
+
+export function startIquitMatches() {
+  const result = drawIquitMatches();
+  if (result.error) return result;
+  return { state: getTournamentState() };
+}
+
+export function updateIquitResult(matchId, scores) {
+  const result = updateIquitMatchResult(matchId, scores);
+  if (result.error) return result;
+  return { state: getTournamentState() };
+}
+
+export function startIquitPairsBatch2() {
+  const fase2 = getPhaseState(FASE2);
+  const standingsFase2 = computeFase2Standings(fase2);
+  if (!standingsFase2.ready) {
+    return { error: 'Inserisci tutti i risultati della Fase 2.', status: 400 };
+  }
+
+  const result = drawIquitPairsBatch2(standingsFase2.eliminatedIds);
+  if (result.error) return result;
+  return { state: getTournamentState() };
+}
+
+export function startIquitMatchesBatch2() {
+  const result = drawIquitMatchesBatch2();
+  if (result.error) return result;
+  return { state: getTournamentState() };
 }
 
 export function resetFase1() {
   const tx = db.transaction(() => {
-    db.prepare(`DELETE FROM tournament_matches WHERE phase = ?`).run(PHASE);
-    db.prepare(`DELETE FROM tournament_pairs WHERE phase = ?`).run(PHASE);
+    db.prepare(`DELETE FROM tournament_matches WHERE phase = ?`).run(FASE1);
+    db.prepare(`DELETE FROM tournament_pairs WHERE phase = ?`).run(FASE1);
+    db.prepare(`DELETE FROM tournament_matches WHERE phase = ?`).run(FASE2);
+    db.prepare(`DELETE FROM tournament_pairs WHERE phase = ?`).run(FASE2);
+    db.prepare(`DELETE FROM tournament_matches WHERE phase = ?`).run(FASE_FINALE);
+    db.prepare(`DELETE FROM tournament_pairs WHERE phase = ?`).run(FASE_FINALE);
+    db.prepare(`DELETE FROM iquit_matches`).run();
+    db.prepare(`DELETE FROM iquit_pairs`).run();
   });
   tx();
-  return { state: getFase1State() };
+  return { state: getTournamentState() };
+}
+
+export function resetFase2() {
+  const tx = db.transaction(() => {
+    db.prepare(`DELETE FROM tournament_matches WHERE phase = ?`).run(FASE2);
+    db.prepare(`DELETE FROM tournament_pairs WHERE phase = ?`).run(FASE2);
+    db.prepare(`DELETE FROM tournament_matches WHERE phase = ?`).run(FASE_FINALE);
+    db.prepare(`DELETE FROM tournament_pairs WHERE phase = ?`).run(FASE_FINALE);
+    db.prepare(`DELETE FROM iquit_matches WHERE batch = 2`).run();
+    db.prepare(`DELETE FROM iquit_pairs WHERE batch = 2`).run();
+  });
+  tx();
+  return { state: getTournamentState() };
+}
+
+export function resetFinale() {
+  const tx = db.transaction(() => {
+    db.prepare(`DELETE FROM tournament_matches WHERE phase = ?`).run(FASE_FINALE);
+    db.prepare(`DELETE FROM tournament_pairs WHERE phase = ?`).run(FASE_FINALE);
+  });
+  tx();
+  return { state: getTournamentState() };
+}
+
+export function resetIquitChamp() {
+  resetIquit();
+  return { state: getTournamentState() };
 }
