@@ -83,12 +83,12 @@ export function drawFinalePairs() {
   return request('/api/tournament/finale/draw-pairs', { method: 'POST' });
 }
 
-export function drawFinaleSemifinals() {
-  return request('/api/tournament/finale/draw-semifinals', { method: 'POST' });
+export function drawFinaleGironi() {
+  return request('/api/tournament/finale/draw-gironi', { method: 'POST' });
 }
 
-export function drawFinaleTiebreak() {
-  return request('/api/tournament/finale/draw-tiebreak', { method: 'POST' });
+export function drawFinaleMatches() {
+  return request('/api/tournament/finale/draw-matches', { method: 'POST' });
 }
 
 export function resetFinale() {

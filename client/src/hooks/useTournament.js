@@ -23,17 +23,7 @@ const emptyState = {
     fase1: { available: false },
     fase2: { available: false },
   },
-  finale: {
-    phase: 'fase-finale',
-    pairsDrawn: false,
-    semifinalsDrawn: false,
-    tiebreakDrawn: false,
-    pairs: [],
-    semifinals: [],
-    tiebreak: null,
-    blackChampion: null,
-    yellowChampion: null,
-  },
+  finale: { ...emptyPhaseState, phase: 'fase-finale' },
   iquit: {
     pairs: [],
     batch1Pairs: [],

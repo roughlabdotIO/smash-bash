@@ -275,55 +275,8 @@ export function getTournamentState() {
   };
 }
 
-function getWinnerPairFromMatch(match) {
-  if (!match.completed) return null;
-  if (match.blackScore > match.yellowScore) return match.blackPair;
-  if (match.yellowScore > match.blackScore) return match.yellowPair;
-  return null;
-}
-
-function getFinaleState() {
-  const flags = getStateFlags(FASE_FINALE);
-  const pairRows = db
-    .prepare(`SELECT * FROM tournament_pairs WHERE phase = ? ORDER BY team, id`)
-    .all(FASE_FINALE);
-  const pairs = pairRows.map(rowToPair);
-
-  const matchRows = db
-    .prepare(`SELECT * FROM tournament_matches WHERE phase = ? ORDER BY id`)
-    .all(FASE_FINALE);
-  const matches = matchRows.map(rowToMatch);
-  const semifinals = matches.filter((m) => m.matchLabel === 'semi-1' || m.matchLabel === 'semi-2');
-  const tiebreak = matches.find((m) => m.matchLabel === 'tiebreak') ?? null;
-
-  function teamChampionFromSemis(team) {
-    for (const m of semifinals) {
-      const winner = getWinnerPairFromMatch(m);
-      if (winner?.team === team) return winner;
-    }
-    return null;
-  }
-
-  let blackChampion = teamChampionFromSemis('black');
-  let yellowChampion = teamChampionFromSemis('yellow');
-
-  if (tiebreak?.completed) {
-    const tbWinner = getWinnerPairFromMatch(tiebreak);
-    if (tbWinner?.team === 'black') blackChampion = tbWinner;
-    if (tbWinner?.team === 'yellow') yellowChampion = tbWinner;
-  }
-
-  return {
-    phase: FASE_FINALE,
-    pairsDrawn: flags.pairsDrawn,
-    semifinalsDrawn: semifinals.length === 2,
-    tiebreakDrawn: Boolean(tiebreak),
-    pairs,
-    semifinals,
-    tiebreak,
-    blackChampion,
-    yellowChampion,
-  };
+export function getFinaleState() {
+  return getPhaseState(FASE_FINALE);
 }
 
 function getPlayerFase1Girone(playerId) {
@@ -606,76 +559,22 @@ export function drawFinalePairs() {
   return drawPairsForPhase(FASE_FINALE, activeIds);
 }
 
-export function drawFinaleSemifinals() {
-  const flags = getStateFlags(FASE_FINALE);
-  if (!flags.pairsDrawn) {
-    return { error: 'Estrai prima le coppie della finale.', status: 400 };
+export function drawFinaleGironi() {
+  const fase2 = getStateFlags(FASE2);
+  if (!fase2.gironiDrawn) {
+    return { error: 'Completa prima la Fase 2.', status: 400 };
   }
-
-  const existing = db
-    .prepare(
-      `SELECT COUNT(*) AS n FROM tournament_matches WHERE phase = ? AND match_label IN ('semi-1', 'semi-2')`
-    )
-    .get(FASE_FINALE).n;
-  if (existing > 0) {
-    return { error: 'Le semifinali sono già state sorteggiate.', status: 409 };
-  }
-
-  const blackPairs = shuffle(
-    db.prepare(`SELECT * FROM tournament_pairs WHERE phase = ? AND team = 'black'`).all(FASE_FINALE)
-  );
-  const yellowPairs = shuffle(
-    db.prepare(`SELECT * FROM tournament_pairs WHERE phase = ? AND team = 'yellow'`).all(FASE_FINALE)
-  );
-
-  if (blackPairs.length !== 2 || yellowPairs.length !== 2) {
-    return {
-      error: `Servono 2 coppie per squadra in finale (Black: ${blackPairs.length}, Yellow: ${yellowPairs.length}).`,
-      status: 400,
-    };
-  }
-
-  const now = Date.now();
-  const insert = db.prepare(
-    `INSERT INTO tournament_matches (phase, girone, black_pair_id, yellow_pair_id, match_label, created_at)
-     VALUES (?, ?, ?, ?, ?, ?)`
-  );
-
-  const tx = db.transaction(() => {
-    insert.run(FASE_FINALE, 'A', blackPairs[0].id, yellowPairs[0].id, 'semi-1', now);
-    insert.run(FASE_FINALE, 'B', blackPairs[1].id, yellowPairs[1].id, 'semi-2', now);
+  return drawGironiForPhase(FASE_FINALE, (blackPairs) => {
+    const perGirone = blackPairs.length / 2;
+    return shuffle(blackPairs).map((pair, i) => ({
+      pair,
+      girone: i < perGirone ? 'A' : 'B',
+    }));
   });
-
-  tx();
-  return { state: getTournamentState() };
 }
 
-export function drawFinaleTiebreak() {
-  const finale = getFinaleState();
-  if (!finale.semifinalsDrawn) {
-    return { error: 'Sorteggia prima le semifinali.', status: 400 };
-  }
-  if (finale.tiebreakDrawn) {
-    return { error: 'Lo spareggio è già stato estratto.', status: 409 };
-  }
-  if (!finale.semifinals.every((m) => m.completed)) {
-    return { error: 'Completa prima entrambe le semifinali.', status: 400 };
-  }
-
-  const blackPairs = shuffle(
-    db.prepare(`SELECT * FROM tournament_pairs WHERE phase = ? AND team = 'black'`).all(FASE_FINALE)
-  );
-  const yellowPairs = shuffle(
-    db.prepare(`SELECT * FROM tournament_pairs WHERE phase = ? AND team = 'yellow'`).all(FASE_FINALE)
-  );
-
-  const now = Date.now();
-  db.prepare(
-    `INSERT INTO tournament_matches (phase, girone, black_pair_id, yellow_pair_id, match_label, created_at)
-     VALUES (?, ?, ?, ?, ?, ?)`
-  ).run(FASE_FINALE, 'A', blackPairs[0].id, yellowPairs[0].id, 'tiebreak', now);
-
-  return { state: getTournamentState() };
+export function drawFinaleMatches() {
+  return drawMatchesForPhase(FASE_FINALE);
 }
 
 export function updateMatchResult(matchId, { blackScore, yellowScore }) {

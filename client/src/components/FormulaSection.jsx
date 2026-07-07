@@ -80,14 +80,14 @@ const PHASES = [
   {
     id: 'finale',
     num: '3',
-    title: 'Fase finale',
+    title: 'Fase 3 — Gironi finali',
     blocks: [
       {
-        title: 'Le ultime 4 coppie',
+        title: 'Composizione',
         items: [
-          'Le 4 coppie rimaste si affrontano nell’ultima fase del torneo.',
-          'Due match in contemporanea, set unico a 21 (cambio campo a 11).',
-          'Se serve, un terzo match ad estrazione — set spareggio a 15 — decreta la coppia vincitrice del proprio team.',
+          '2 gironi da 4 coppie ciascuno: 2 Black + 2 Yellow per girone.',
+          'Nuove coppie miste estratte per squadra tra i semifinalisti (8 giocatori per team).',
+          'Ogni partita: coppia Black vs coppia Yellow, set unico a 21 (cambio campo a 11).',
         ],
       },
     ],

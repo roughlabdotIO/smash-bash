@@ -10,8 +10,8 @@ import {
   drawFase2Matches,
   resetFase2,
   drawFinalePairs,
-  drawFinaleSemifinals,
-  drawFinaleTiebreak,
+  drawFinaleGironi,
+  drawFinaleMatches,
   resetFinale,
   drawIquitPairs,
   drawIquitMatches,
@@ -22,7 +22,6 @@ import {
 import { useTournament } from '../hooks/useTournament.js';
 import PhaseSection from '../components/PhaseSection.jsx';
 import PhaseRecapSection from '../components/PhaseRecapSection.jsx';
-import FinaleSection from '../components/FinaleSection.jsx';
 import IquitChampSection from '../components/IquitChampSection.jsx';
 
 export default function TorneoPage() {
@@ -116,15 +115,27 @@ export default function TorneoPage() {
                 elimNote="Gli eliminati di Fase 2 si uniscono all'iQuit Champ in corso."
               />
 
-              <FinaleSection
-                finale={state.finale}
+              <PhaseSection
+                phaseNum={3}
+                title="Fase 3 — Gironi finali"
+                note="Le ultime 4 coppie per squadra (8 giocatori). Set unico a 21 punti, cambio campo a 11."
+                rules={[
+                  'Rimescolamento: nuove coppie miste per squadra (stesso team).',
+                  'Nessuna coppia può ripetersi rispetto alla Fase 2.',
+                  '2 gironi da 4 coppie ciascuno: 2 Black + 2 Yellow per girone.',
+                  'Ogni match: coppia Black vs coppia Yellow.',
+                ]}
+                state={state.finale}
                 busy={busy}
                 locked={!finaleUnlocked}
-                lockedMessage="Inserisci tutti i risultati della Fase 2 per avviare la finale."
+                lockedMessage="Inserisci tutti i risultati della Fase 2 per avviare la Fase 3."
+                drawPairsLabel="Rimescola ed estrai coppie"
+                pairsBlockTitle="Coppie Fase 3"
                 onDrawPairs={() => runAction(drawFinalePairs)}
-                onDrawSemifinals={() => runAction(drawFinaleSemifinals)}
-                onDrawTiebreak={() => runAction(drawFinaleTiebreak)}
+                onDrawGironi={() => runAction(drawFinaleGironi)}
+                onDrawMatches={() => runAction(drawFinaleMatches)}
                 onReset={() => runAction(resetFinale)}
+                resetLabel="Reset Fase 3"
               />
 
               <IquitChampSection

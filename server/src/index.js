@@ -23,8 +23,8 @@ import {
   resetFinale,
   updateMatchResult,
   drawFinalePairs,
-  drawFinaleSemifinals,
-  drawFinaleTiebreak,
+  drawFinaleGironi,
+  drawFinaleMatches,
   startIquitPairs,
   startIquitMatches,
   startIquitPairsBatch2,
@@ -164,15 +164,15 @@ app.post('/api/tournament/finale/draw-pairs', (_req, res) => {
   res.json(result.state);
 });
 
-app.post('/api/tournament/finale/draw-semifinals', (_req, res) => {
-  const result = drawFinaleSemifinals();
+app.post('/api/tournament/finale/draw-gironi', (_req, res) => {
+  const result = drawFinaleGironi();
   if (result.error) return res.status(result.status).json({ error: result.error });
   broadcastTournament();
   res.json(result.state);
 });
 
-app.post('/api/tournament/finale/draw-tiebreak', (_req, res) => {
-  const result = drawFinaleTiebreak();
+app.post('/api/tournament/finale/draw-matches', (_req, res) => {
+  const result = drawFinaleMatches();
   if (result.error) return res.status(result.status).json({ error: result.error });
   broadcastTournament();
   res.json(result.state);

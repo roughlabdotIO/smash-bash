@@ -183,7 +183,7 @@ export default function MasaModePage() {
   const hasMatches =
     state.fase1.matchesDrawn ||
     state.fase2.matchesDrawn ||
-    state.finale.semifinalsDrawn ||
+    state.finale.matchesDrawn ||
     state.iquit.matchesDrawn;
   const formProps = { busy, setBusy, setError: setActionError, onSaved: refresh };
 
@@ -262,25 +262,14 @@ export default function MasaModePage() {
                 </div>
               )}
 
-              {state.finale.semifinalsDrawn && (
+              {state.finale.matchesDrawn && (
                 <div className="masa-phase-block">
-                  <h2 className="masa-phase-title">Finale</h2>
+                  <h2 className="masa-phase-title">Fase 3</h2>
                   <div className="masa-matches-grid">
-                    {state.finale.semifinals.map((match, i) => (
-                      <MatchResultForm
-                        key={match.id}
-                        match={match}
-                        label={`Semifinale ${i + 1}`}
-                        {...formProps}
-                      />
-                    ))}
-                    {state.finale.tiebreak && (
-                      <MatchResultForm
-                        key={state.finale.tiebreak.id}
-                        match={state.finale.tiebreak}
-                        label="Spareggio"
-                        {...formProps}
-                      />
+                    {[...state.finale.gironeA.matches, ...state.finale.gironeB.matches].map(
+                      (match) => (
+                        <MatchResultForm key={match.id} match={match} {...formProps} />
+                      )
                     )}
                   </div>
                 </div>
