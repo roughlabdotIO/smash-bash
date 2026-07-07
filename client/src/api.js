@@ -26,3 +26,23 @@ export function registerPlayer(body) {
 export function drawPlayer(id) {
   return request(`/api/players/${id}/draw`, { method: 'POST' });
 }
+
+export function fetchFase1() {
+  return request('/api/tournament/fase-1');
+}
+
+export function drawFase1Pairs() {
+  return request('/api/tournament/fase-1/draw-pairs', { method: 'POST' });
+}
+
+export function drawFase1Gironi() {
+  return request('/api/tournament/fase-1/draw-gironi', { method: 'POST' });
+}
+
+export function drawFase1Matches() {
+  return request('/api/tournament/fase-1/draw-matches', { method: 'POST' });
+}
+
+export function resetFase1() {
+  return request('/api/tournament/fase-1/reset', { method: 'POST' });
+}

@@ -37,3 +37,27 @@ if (!playerColumns.some((col) => col.name === 'telefono')) {
 }
 
 export const CAP = 6;
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS tournament_pairs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    phase TEXT NOT NULL DEFAULT 'fase-1',
+    team TEXT NOT NULL CHECK (team IN ('black', 'yellow')),
+    player1_id INTEGER NOT NULL REFERENCES players(id),
+    player2_id INTEGER NOT NULL REFERENCES players(id),
+    mixed INTEGER NOT NULL DEFAULT 1,
+    girone TEXT CHECK (girone IN ('A', 'B')),
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+  )
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS tournament_matches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    phase TEXT NOT NULL DEFAULT 'fase-1',
+    girone TEXT NOT NULL CHECK (girone IN ('A', 'B')),
+    black_pair_id INTEGER NOT NULL REFERENCES tournament_pairs(id),
+    yellow_pair_id INTEGER NOT NULL REFERENCES tournament_pairs(id),
+    created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+  )
+`);

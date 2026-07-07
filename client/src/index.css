@@ -1542,6 +1542,223 @@ footer strong {
   font-size: 0.95rem !important;
 }
 
+.torneo-status {
+  margin: 0 0 20px;
+  font-size: 0.9rem;
+  color: var(--sand);
+}
+
+.torneo-status.err {
+  color: #ff7b6b;
+}
+
+.fase-section {
+  margin-bottom: 48px;
+}
+
+.fase-section-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.fase-num {
+  font-family: 'Anton', sans-serif;
+  font-size: 2.5rem;
+  line-height: 1;
+  color: var(--yellow);
+}
+
+.fase-section-head h2 {
+  margin: 0;
+  font-family: 'Anton', sans-serif;
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--sand);
+}
+
+.fase-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.fase-btn {
+  font-family: 'Anton', sans-serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 14px 22px;
+  background: var(--yellow);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.fase-btn:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+
+.fase-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.fase-block-title,
+.fase-block h3 {
+  margin: 0 0 16px;
+  font-family: 'Anton', sans-serif;
+  font-size: 1.1rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--yellow);
+}
+
+.fase-gironi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+
+.torneo-girone-block {
+  background: #1c1c1c;
+  border: 2px solid rgba(255, 212, 0, 0.35);
+  padding: 20px;
+}
+
+.torneo-girone-title {
+  margin: 0 0 16px;
+  font-family: 'Anton', sans-serif;
+  font-size: 1.25rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--yellow);
+}
+
+.torneo-girone-matches-title {
+  margin: 24px 0 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #bdb4a2;
+}
+
+.torneo-table-wrap {
+  overflow-x: auto;
+}
+
+.torneo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.torneo-table th,
+.torneo-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(245, 233, 208, 0.12);
+  vertical-align: middle;
+}
+
+.torneo-table th {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8a8274;
+}
+
+.torneo-table tbody tr:hover {
+  background: rgba(255, 212, 0, 0.05);
+}
+
+.torneo-pair-plus,
+.torneo-vs {
+  text-align: center;
+  font-family: 'Anton', sans-serif;
+  color: var(--yellow);
+  width: 32px;
+}
+
+.torneo-team-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border-radius: 2px;
+}
+
+.torneo-team-pill.black {
+  background: var(--black);
+  color: var(--sand);
+  border: 1px solid var(--sand);
+}
+
+.torneo-team-pill.yellow {
+  background: var(--yellow);
+  color: var(--ink);
+}
+
+.torneo-mixed-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8fe388;
+}
+
+.torneo-same-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffb347;
+}
+
+.fase-reset-btn {
+  margin-top: 32px;
+  padding: 8px 16px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ff7b6b;
+  background: transparent;
+  border: 1px solid rgba(255, 123, 107, 0.5);
+  cursor: pointer;
+}
+
+.fase-reset-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 820px) {
+  .fase-gironi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fase-actions {
+    flex-direction: column;
+  }
+
+  .fase-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;

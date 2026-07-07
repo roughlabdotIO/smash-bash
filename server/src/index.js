@@ -10,6 +10,13 @@ import {
   drawTeam,
   getRosterPayload,
 } from './playerService.js';
+import {
+  getFase1State,
+  drawPairs,
+  drawGironi,
+  drawMatches,
+  resetFase1,
+} from './tournamentService.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3001;
@@ -61,12 +68,47 @@ function broadcastRoster() {
   io.emit('roster:update', getRosterPayload());
 }
 
+function broadcastTournament() {
+  io.emit('tournament:update', getFase1State());
+}
+
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
 });
 
 app.get('/api/roster', (_req, res) => {
   res.json(getRosterPayload());
+});
+
+app.get('/api/tournament/fase-1', (_req, res) => {
+  res.json(getFase1State());
+});
+
+app.post('/api/tournament/fase-1/draw-pairs', (_req, res) => {
+  const result = drawPairs();
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  broadcastTournament();
+  res.json(result.state);
+});
+
+app.post('/api/tournament/fase-1/draw-gironi', (_req, res) => {
+  const result = drawGironi();
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  broadcastTournament();
+  res.json(result.state);
+});
+
+app.post('/api/tournament/fase-1/draw-matches', (_req, res) => {
+  const result = drawMatches();
+  if (result.error) return res.status(result.status).json({ error: result.error });
+  broadcastTournament();
+  res.json(result.state);
+});
+
+app.post('/api/tournament/fase-1/reset', (_req, res) => {
+  const result = resetFase1();
+  broadcastTournament();
+  res.json(result.state);
 });
 
 app.post('/api/players', (req, res) => {
@@ -94,6 +136,7 @@ app.post('/api/players/:id/draw', (req, res) => {
 
 io.on('connection', (socket) => {
   socket.emit('roster:update', getRosterPayload());
+  socket.emit('tournament:update', getFase1State());
 });
 
 if (process.env.NODE_ENV === 'production') {
