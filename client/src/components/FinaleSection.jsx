@@ -70,6 +70,7 @@ export default function FinaleSection({
           </p>
           <ul className="fase-rules-list">
             <li>Rimescolamento: nuove coppie miste tra i semifinalisti.</li>
+            <li>Nessuna coppia può ripetersi rispetto alla Fase 2.</li>
             <li>Due match Black vs Yellow sorteggiati contemporaneamente.</li>
           </ul>
         </div>

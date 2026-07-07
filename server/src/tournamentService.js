@@ -31,31 +31,130 @@ function shuffle(arr) {
   return a;
 }
 
-function formPairsForTeam(players) {
-  const males = shuffle(players.filter((p) => p.sesso === 'M'));
-  const females = shuffle(players.filter((p) => p.sesso === 'F'));
-  const pairs = [];
-  const mixedCount = Math.min(males.length, females.length);
+function pairKey(id1, id2) {
+  return id1 < id2 ? `${id1}-${id2}` : `${id2}-${id1}`;
+}
 
-  for (let i = 0; i < mixedCount; i += 1) {
-    pairs.push({ player1: males[i], player2: females[i], mixed: true });
+function isForbiddenPair(p1, p2, forbidden) {
+  return forbidden.has(pairKey(p1.id, p2.id));
+}
+
+function getForbiddenPairsFromPhase(phase) {
+  const rows = db
+    .prepare(`SELECT player1_id, player2_id FROM tournament_pairs WHERE phase = ?`)
+    .all(phase);
+  const forbidden = new Set();
+  for (const row of rows) {
+    forbidden.add(pairKey(row.player1_id, row.player2_id));
+  }
+  return forbidden;
+}
+
+function formMixedPairs(males, females, forbidden) {
+  const n = Math.min(males.length, females.length);
+  if (n === 0) {
+    return { mixed: [], leftoverM: males, leftoverF: females };
   }
 
-  const extraM = males.slice(mixedCount);
-  const extraF = females.slice(mixedCount);
+  const mList = shuffle(males);
+  const fList = shuffle(females);
 
-  for (let i = 0; i < extraM.length; i += 2) {
-    if (i + 1 < extraM.length) {
-      pairs.push({ player1: extraM[i], player2: extraM[i + 1], mixed: false });
+  function search(mIdx, fUsed, pairs) {
+    if (mIdx === n) return pairs;
+    const male = mList[mIdx];
+    const options = [];
+    for (let j = 0; j < n; j += 1) {
+      if (fUsed.has(j)) continue;
+      if (!isForbiddenPair(male, fList[j], forbidden)) options.push(j);
     }
-  }
-  for (let i = 0; i < extraF.length; i += 2) {
-    if (i + 1 < extraF.length) {
-      pairs.push({ player1: extraF[i], player2: extraF[i + 1], mixed: false });
+    shuffle(options);
+    for (const j of options) {
+      fUsed.add(j);
+      const result = search(mIdx + 1, fUsed, [
+        ...pairs,
+        { player1: male, player2: fList[j], mixed: true },
+      ]);
+      if (result) return result;
+      fUsed.delete(j);
     }
+    return null;
   }
 
-  return pairs;
+  const mixed = search(0, new Set(), []);
+  if (!mixed) return null;
+
+  const pairedMaleIds = new Set(mixed.map((p) => p.player1.id));
+  const pairedFemaleIds = new Set(mixed.map((p) => p.player2.id));
+
+  return {
+    mixed,
+    leftoverM: males.filter((p) => !pairedMaleIds.has(p.id)),
+    leftoverF: females.filter((p) => !pairedFemaleIds.has(p.id)),
+  };
+}
+
+function formSameSexPairs(players, forbidden) {
+  if (players.length === 0) return [];
+  if (players.length % 2 !== 0) return null;
+
+  const list = shuffle(players);
+  const used = new Array(list.length).fill(false);
+
+  function pairRemaining(pairs) {
+    let start = -1;
+    for (let i = 0; i < list.length; i += 1) {
+      if (!used[i]) {
+        start = i;
+        break;
+      }
+    }
+    if (start === -1) return pairs;
+
+    const options = [];
+    for (let j = start + 1; j < list.length; j += 1) {
+      if (!used[j] && !isForbiddenPair(list[start], list[j], forbidden)) {
+        options.push(j);
+      }
+    }
+    shuffle(options);
+    for (const j of options) {
+      used[start] = true;
+      used[j] = true;
+      const result = pairRemaining([
+        ...pairs,
+        { player1: list[start], player2: list[j], mixed: false },
+      ]);
+      if (result) return result;
+      used[start] = false;
+      used[j] = false;
+    }
+    return null;
+  }
+
+  return pairRemaining([]);
+}
+
+function formPairsForTeamOnce(players, forbidden) {
+  const males = players.filter((p) => p.sesso === 'M');
+  const females = players.filter((p) => p.sesso === 'F');
+
+  const mixedResult = formMixedPairs(males, females, forbidden);
+  if (!mixedResult) return null;
+
+  const mmPairs = formSameSexPairs(mixedResult.leftoverM, forbidden);
+  if (!mmPairs) return null;
+  const ffPairs = formSameSexPairs(mixedResult.leftoverF, forbidden);
+  if (!ffPairs) return null;
+
+  return [...mixedResult.mixed, ...mmPairs, ...ffPairs];
+}
+
+function formPairsForTeam(players, forbidden = new Set()) {
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    const pairs = formPairsForTeamOnce(players, forbidden);
+    if (pairs) return pairs;
+  }
+  return null;
 }
 
 function rowToPair(row) {
@@ -319,8 +418,23 @@ function drawPairsForPhase(phase, playerIds = null) {
     return { error: 'Servono almeno 2 giocatori attivi per squadra.', status: 400 };
   }
 
-  const blackPairs = formPairsForTeam(blackPlayers);
-  const yellowPairs = formPairsForTeam(yellowPlayers);
+  let forbidden = new Set();
+  if (phase === FASE2) {
+    forbidden = getForbiddenPairsFromPhase(FASE1);
+  } else if (phase === FASE_FINALE) {
+    forbidden = getForbiddenPairsFromPhase(FASE2);
+  }
+
+  const blackPairs = formPairsForTeam(blackPlayers, forbidden);
+  const yellowPairs = formPairsForTeam(yellowPlayers, forbidden);
+
+  if (!blackPairs || !yellowPairs) {
+    return {
+      error:
+        'Impossibile formare coppie senza ripetere abbinamenti della fase precedente. Riprova il sorteggio.',
+      status: 409,
+    };
+  }
   const now = Date.now();
 
   const insert = db.prepare(

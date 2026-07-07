@@ -12,7 +12,7 @@ function StandingsTable({ team, label, compact, showElimNote }) {
             <tr>
               <th>Giocatore</th>
               {!compact && <th>Girone</th>}
-              <th>Punti</th>
+              <th>Punti fatti</th>
               <th>Stato</th>
             </tr>
           </thead>

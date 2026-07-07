@@ -81,7 +81,7 @@ export default function TorneoPage() {
               <PhaseRecapSection
                 standings={state.standings}
                 title="Recap Fase 1 — Classifica"
-                note="Punti totali segnati da ogni giocatore. In rosso i 4 eliminati per squadra."
+                note="Punti totali segnati da ogni giocatore nella fase (non la differenza reti). In rosso i 4 eliminati per squadra."
               />
 
               <PhaseSection
@@ -90,6 +90,7 @@ export default function TorneoPage() {
                 note="Solo i giocatori non eliminati in Fase 1."
                 rules={[
                   'Rimescolamento generale: nuove coppie miste estratte a sorteggio per ogni squadra.',
+                  'Nessuna coppia può ripetersi rispetto alla Fase 1 (stesso uomo con la stessa donna).',
                   'Rotazione Black: chi era nel Girone A in Fase 1 passa al Girone B (e viceversa).',
                   'Yellow: tutte le coppie si mescolano tra i due gironi.',
                 ]}
@@ -111,7 +112,7 @@ export default function TorneoPage() {
               <PhaseRecapSection
                 standings={state.standingsFase2}
                 title="Recap Fase 2 — Classifica"
-                note="Altri 4 eliminati per squadra. I semifinalisti passano alla fase finale."
+                note="Punti totali segnati nella fase (non la differenza reti). Altri 4 eliminati per squadra."
                 elimNote="Gli eliminati di Fase 2 si uniscono all'iQuit Champ in corso."
               />
 

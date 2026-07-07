@@ -48,8 +48,8 @@ const PHASES = [
       {
         title: 'Eliminazioni',
         items: [
-          'A fine Fase 1 si conteggiano i punti.',
-          'Dal Girone 1 escono, per ogni team, i 2 uomini e le 2 donne con meno punti; stesso criterio sul Girone 2.',
+          'A fine Fase 1 si conteggiano i punti totali segnati da ogni giocatore nella fase.',
+          'Dal Girone 1 escono, per ogni team, i 2 uomini e le 2 donne con meno punti fatti; stesso criterio sul Girone 2.',
           'Gli 8 giocatori eliminati (4 per team) passano all’iQuit Champ sul campo 4.',
         ],
       },
@@ -71,7 +71,7 @@ const PHASES = [
       {
         title: 'Eliminazioni',
         items: [
-          'A conclusione della Fase 2 escono altri giocatori: 2 donne e 2 uomini per girone e per team.',
+          'A conclusione della Fase 2 escono altri giocatori: 2 donne e 2 uomini per girone e per team, sempre in base ai punti totali fatti nella fase.',
           'Si uniscono all’iQuit Champ in corso sul campo 4.',
         ],
       },

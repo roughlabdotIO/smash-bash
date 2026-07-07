@@ -26,7 +26,7 @@ function buildTeamRows(playerStats, team) {
     .filter((s) => s.team === team)
     .sort((a, b) => {
       if (a.girone !== b.girone) return a.girone.localeCompare(b.girone);
-      if (a.points !== b.points) return b.points - a.points;
+      if (a.pointsScored !== b.pointsScored) return b.pointsScored - a.pointsScored;
       return a.player.cognome.localeCompare(b.player.cognome, 'it');
     })
     .map((s) => ({
@@ -35,7 +35,8 @@ function buildTeamRows(playerStats, team) {
       cognome: s.player.cognome,
       sesso: s.player.sesso,
       girone: s.girone,
-      points: s.points,
+      points: s.pointsScored,
+      pointsScored: s.pointsScored,
       eliminated: s.eliminated,
     }));
 
@@ -57,7 +58,7 @@ function applyEliminations(playerStats) {
             (s) => s.girone === girone && s.team === team && s.player.sesso === sesso
           )
           .sort((a, b) => {
-            if (a.points !== b.points) return a.points - b.points;
+            if (a.pointsScored !== b.pointsScored) return a.pointsScored - b.pointsScored;
             return a.player.cognome.localeCompare(b.player.cognome, 'it');
           });
 
@@ -72,6 +73,20 @@ function applyEliminations(playerStats) {
   return eliminatedIds;
 }
 
+function addMatchPointsScored(playerStats, match) {
+  const bp = match.blackPair;
+  const yp = match.yellowPair;
+
+  for (const id of [bp.player1.id, bp.player2.id]) {
+    const stat = playerStats.get(id);
+    if (stat) stat.pointsScored += match.blackScore;
+  }
+  for (const id of [yp.player1.id, yp.player2.id]) {
+    const stat = playerStats.get(id);
+    if (stat) stat.pointsScored += match.yellowScore;
+  }
+}
+
 export function computeLiveStandings(phaseState) {
   if (!phaseState.gironiDrawn || phaseState.pairs.length === 0) {
     return { available: false };
@@ -83,7 +98,7 @@ export function computeLiveStandings(phaseState) {
     for (const player of [pair.player1, pair.player2]) {
       playerStats.set(player.id, {
         player,
-        points: 0,
+        pointsScored: 0,
         girone: pair.girone,
         team: pair.team,
         eliminated: false,
@@ -95,16 +110,7 @@ export function computeLiveStandings(phaseState) {
 
   for (const match of matches) {
     if (!match.completed) continue;
-    const bp = match.blackPair;
-    const yp = match.yellowPair;
-    for (const id of [bp.player1.id, bp.player2.id]) {
-      const stat = playerStats.get(id);
-      if (stat) stat.points += match.blackScore;
-    }
-    for (const id of [yp.player1.id, yp.player2.id]) {
-      const stat = playerStats.get(id);
-      if (stat) stat.points += match.yellowScore;
-    }
+    addMatchPointsScored(playerStats, match);
   }
 
   const matchesPlayed = matches.filter((m) => m.completed).length;

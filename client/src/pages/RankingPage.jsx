@@ -28,12 +28,12 @@ export default function RankingPage() {
               <StandingsPanel
                 standings={ranking?.fase1}
                 title="Fase 1"
-                note="Punti totali segnati da ogni giocatore. Gli eliminati compaiono in rosso a fine fase."
+                note="Punti totali segnati nella fase (somma dei punti fatti dal proprio team in ogni match). Gli eliminati compaiono in rosso a fine fase."
               />
               <StandingsPanel
                 standings={ranking?.fase2}
                 title="Fase 2"
-                note="Secondo girone: solo i giocatori non eliminati in Fase 1."
+                note="Secondo girone: solo i giocatori non eliminati in Fase 1. Punti totali segnati nella fase (somma punti fatti dal proprio team)."
                 elimNote="Gli eliminati di Fase 2 si uniscono all'iQuit Champ in corso."
               />
             </div>
