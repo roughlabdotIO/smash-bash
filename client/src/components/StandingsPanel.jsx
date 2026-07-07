@@ -52,7 +52,7 @@ function StandingsTable({ team, label, compact, showElimNote, showConceded, cumu
       </div>
       {showElimNote && (
         <p className="recap-elim-note">
-          Eliminati: {team.eliminated.length} giocatori (2 uomini + 2 donne per girone).
+          Eliminati: {team.eliminated.length} giocatori (2 uomini + 2 donne per squadra).
           {team.rows.some((r) => r.eliminatedOnTiebreak) &&
             ' In rosso chi esce a parità di punti fatti con più punti subiti.'}
         </p>

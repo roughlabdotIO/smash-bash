@@ -54,28 +54,24 @@ function buildTeamRows(playerStats, team) {
 function applyEliminations(playerStats) {
   const eliminatedIds = new Set();
 
-  for (const girone of ['A', 'B']) {
-    for (const team of ['black', 'yellow']) {
-      for (const sesso of ['M', 'F']) {
-        const group = [...playerStats.values()]
-          .filter(
-            (s) => s.girone === girone && s.team === team && s.player.sesso === sesso
-          )
-          .sort((a, b) => {
-            if (a.pointsScored !== b.pointsScored) return a.pointsScored - b.pointsScored;
-            if (a.pointsConceded !== b.pointsConceded) return b.pointsConceded - a.pointsConceded;
-            return a.player.cognome.localeCompare(b.player.cognome, 'it');
-          });
-
-        group.slice(0, 2).forEach((s) => {
-          eliminatedIds.add(s.player.id);
-          s.eliminated = true;
-          const tiedOnPoints = group.filter((g) => g.pointsScored === s.pointsScored);
-          if (tiedOnPoints.length > 1) {
-            s.eliminatedOnTiebreak = true;
-          }
+  for (const team of ['black', 'yellow']) {
+    for (const sesso of ['M', 'F']) {
+      const group = [...playerStats.values()]
+        .filter((s) => s.team === team && s.player.sesso === sesso)
+        .sort((a, b) => {
+          if (a.pointsScored !== b.pointsScored) return a.pointsScored - b.pointsScored;
+          if (a.pointsConceded !== b.pointsConceded) return b.pointsConceded - a.pointsConceded;
+          return a.player.cognome.localeCompare(b.player.cognome, 'it');
         });
-      }
+
+      group.slice(0, 2).forEach((s) => {
+        eliminatedIds.add(s.player.id);
+        s.eliminated = true;
+        const tiedOnPoints = group.filter((g) => g.pointsScored === s.pointsScored);
+        if (tiedOnPoints.length > 1) {
+          s.eliminatedOnTiebreak = true;
+        }
+      });
     }
   }
 
