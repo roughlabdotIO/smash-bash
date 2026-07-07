@@ -81,7 +81,7 @@ export default function TorneoPage() {
               <PhaseRecapSection
                 standings={state.standings}
                 title="Recap Fase 1 — Classifica"
-                note="Punti totali segnati da ogni giocatore nella fase (non la differenza reti). In rosso i 4 eliminati per squadra."
+                note="Punti fatti per l'eliminazione; a parità conta chi ha subito più punti (evidenziato in rosso). 4 eliminati per squadra."
               />
 
               <PhaseSection
@@ -112,7 +112,7 @@ export default function TorneoPage() {
               <PhaseRecapSection
                 standings={state.standingsFase2}
                 title="Recap Fase 2 — Classifica"
-                note="Punti totali segnati nella fase (non la differenza reti). Altri 4 eliminati per squadra."
+                note="Stesso criterio Fase 1: meno punti fatti; a parità più punti subiti (in rosso). Altri 4 eliminati per squadra."
                 elimNote="Gli eliminati di Fase 2 si uniscono all'iQuit Champ in corso."
               />
 

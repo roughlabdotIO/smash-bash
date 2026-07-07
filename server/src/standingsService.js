@@ -27,6 +27,7 @@ function buildTeamRows(playerStats, team) {
     .sort((a, b) => {
       if (a.girone !== b.girone) return a.girone.localeCompare(b.girone);
       if (a.pointsScored !== b.pointsScored) return b.pointsScored - a.pointsScored;
+      if (a.pointsConceded !== b.pointsConceded) return a.pointsConceded - b.pointsConceded;
       return a.player.cognome.localeCompare(b.player.cognome, 'it');
     })
     .map((s) => ({
@@ -37,7 +38,10 @@ function buildTeamRows(playerStats, team) {
       girone: s.girone,
       points: s.pointsScored,
       pointsScored: s.pointsScored,
+      pointsConceded: s.pointsConceded,
+      pointsDiff: s.pointsScored - s.pointsConceded,
       eliminated: s.eliminated,
+      eliminatedOnTiebreak: s.eliminatedOnTiebreak,
     }));
 
   return {
@@ -59,12 +63,17 @@ function applyEliminations(playerStats) {
           )
           .sort((a, b) => {
             if (a.pointsScored !== b.pointsScored) return a.pointsScored - b.pointsScored;
+            if (a.pointsConceded !== b.pointsConceded) return b.pointsConceded - a.pointsConceded;
             return a.player.cognome.localeCompare(b.player.cognome, 'it');
           });
 
         group.slice(0, 2).forEach((s) => {
           eliminatedIds.add(s.player.id);
           s.eliminated = true;
+          const tiedOnPoints = group.filter((g) => g.pointsScored === s.pointsScored);
+          if (tiedOnPoints.length > 1) {
+            s.eliminatedOnTiebreak = true;
+          }
         });
       }
     }
@@ -73,17 +82,23 @@ function applyEliminations(playerStats) {
   return eliminatedIds;
 }
 
-function addMatchPointsScored(playerStats, match) {
+function addMatchPoints(playerStats, match) {
   const bp = match.blackPair;
   const yp = match.yellowPair;
 
   for (const id of [bp.player1.id, bp.player2.id]) {
     const stat = playerStats.get(id);
-    if (stat) stat.pointsScored += match.blackScore;
+    if (stat) {
+      stat.pointsScored += match.blackScore;
+      stat.pointsConceded += match.yellowScore;
+    }
   }
   for (const id of [yp.player1.id, yp.player2.id]) {
     const stat = playerStats.get(id);
-    if (stat) stat.pointsScored += match.yellowScore;
+    if (stat) {
+      stat.pointsScored += match.yellowScore;
+      stat.pointsConceded += match.blackScore;
+    }
   }
 }
 
@@ -99,9 +114,11 @@ export function computeLiveStandings(phaseState) {
       playerStats.set(player.id, {
         player,
         pointsScored: 0,
+        pointsConceded: 0,
         girone: pair.girone,
         team: pair.team,
         eliminated: false,
+        eliminatedOnTiebreak: false,
       });
     }
   }
@@ -110,7 +127,7 @@ export function computeLiveStandings(phaseState) {
 
   for (const match of matches) {
     if (!match.completed) continue;
-    addMatchPointsScored(playerStats, match);
+    addMatchPoints(playerStats, match);
   }
 
   const matchesPlayed = matches.filter((m) => m.completed).length;

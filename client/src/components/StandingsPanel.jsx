@@ -1,4 +1,4 @@
-function StandingsTable({ team, label, compact, showElimNote }) {
+function StandingsTable({ team, label, compact, showElimNote, showTiebreak }) {
   if (!team?.rows?.length) return null;
 
   return (
@@ -13,12 +13,16 @@ function StandingsTable({ team, label, compact, showElimNote }) {
               <th>Giocatore</th>
               {!compact && <th>Girone</th>}
               <th>Punti fatti</th>
+              {showTiebreak && !compact && <th>Punti subiti</th>}
               <th>Stato</th>
             </tr>
           </thead>
           <tbody>
             {team.rows.map((row) => (
-              <tr key={row.id} className={row.eliminated ? 'recap-eliminated' : ''}>
+              <tr
+                key={row.id}
+                className={row.eliminatedOnTiebreak ? 'recap-eliminated-tiebreak' : ''}
+              >
                 <td>
                   {row.nome} {row.cognome}
                   {compact && (
@@ -27,8 +31,13 @@ function StandingsTable({ team, label, compact, showElimNote }) {
                 </td>
                 {!compact && <td>Girone {row.girone}</td>}
                 <td className="recap-points">{row.points}</td>
+                {showTiebreak && !compact && (
+                  <td className="recap-points-conceded">{row.pointsConceded}</td>
+                )}
                 <td>
-                  {row.eliminated ? (
+                  {row.eliminatedOnTiebreak ? (
+                    <span className="recap-tiebreak-badge">Più punti subiti</span>
+                  ) : row.eliminated ? (
                     <span className="recap-elim-badge">Eliminato</span>
                   ) : (
                     <span className="recap-active-badge">In gara</span>
@@ -41,7 +50,9 @@ function StandingsTable({ team, label, compact, showElimNote }) {
       </div>
       {showElimNote && (
         <p className="recap-elim-note">
-          Eliminati: {team.eliminated.length} giocatori (2 uomini + 2 donne per girone)
+          Eliminati: {team.eliminated.length} giocatori (2 uomini + 2 donne per girone).
+          {team.rows.some((r) => r.eliminatedOnTiebreak) &&
+            ' In rosso chi esce a parità di punti fatti con più punti subiti.'}
         </p>
       )}
     </div>
@@ -87,8 +98,20 @@ export default function StandingsPanel({
       {note && <p className="standings-panel-note">{note}</p>}
 
       <div className="recap-teams-grid">
-        <StandingsTable team={standings.black} label="Black" compact={compact} showElimNote={standings.ready} />
-        <StandingsTable team={standings.yellow} label="Yellow" compact={compact} showElimNote={standings.ready} />
+        <StandingsTable
+          team={standings.black}
+          label="Black"
+          compact={compact}
+          showElimNote={standings.ready}
+          showTiebreak={standings.ready}
+        />
+        <StandingsTable
+          team={standings.yellow}
+          label="Yellow"
+          compact={compact}
+          showElimNote={standings.ready}
+          showTiebreak={standings.ready}
+        />
       </div>
 
       {elimNote && standings.ready && <p className="recap-footer-note">{elimNote}</p>}
